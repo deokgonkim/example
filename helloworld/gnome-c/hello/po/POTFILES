@@ -1,0 +1,7 @@
+data/net.dgkim.example.desktop.in
+data/net.dgkim.example.appdata.xml.in
+data/net.dgkim.example.gschema.xml
+src/hello-window.ui
+src/main.c
+src/hello-window.c
+
