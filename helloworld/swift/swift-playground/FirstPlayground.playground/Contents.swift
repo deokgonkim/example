@@ -3,12 +3,27 @@ import UIKit
 //MARK: test assert
 //testAssert()
 
+//MARK: test class
+//testStructMutate()
+testClassModify()
+
 //MARK: test closure
 //testClosure()
 //testIo()
 
+//MARK: test control
+//testControlSwitch()
+//testControl()
+
 //MARK: test enumeration
 //testEnumeration()
+//testImplicitEnum()
+//testEnumWithSwitch()
+//testEnumIterating()
+//testBarcode()
+//testBitSex()
+//testStrSex()
+//testStrSexValue()
 
 //MARK: test function
 //testFunction()
@@ -32,6 +47,8 @@ import UIKit
 
 //MARK: test struct
 //testStruct()
+//testNameChange()
+//testNameChangeClass()
 //testStructCreation()
 //testJson()
 

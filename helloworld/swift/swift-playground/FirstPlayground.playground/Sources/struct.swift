@@ -16,6 +16,18 @@ public struct Player {
     }
 }
 
+public class PlayerClass: CustomStringConvertible {
+    var name: String
+    var highScore: Int = 0
+    var history: [Int] = []
+    
+    init(_ name: String) {
+        self.name = name
+    }
+    
+    public var description: String { return "PlayerClass: \(name)" }
+}
+
 extension Player {
     mutating func updateStore(_ newScore: Int) {
         self.history.append(newScore)
@@ -29,6 +41,36 @@ extension Player {
 
 extension Player: Codable, Equatable {}
 
+
+public func testNameChange() {
+    //TODO: struct(and other types) is constant. and immutable by default.
+    func nameModifier(_ p: inout Player) {
+        p.name += " MODIFIED"
+    }
+    let p1 = Player("Player1")
+    print(p1)
+    
+    var p2 = p1
+    //TODO: struct is copied
+    nameModifier(&p2)
+    print(p1)
+    print(p2)
+}
+
+public func testNameChangeClass() {
+    //TODO: classes are reference type. so it is mutable.
+    func nameModifier(_ p: PlayerClass) {
+        p.name += " MODIFIED"
+    }
+    let p1 = PlayerClass("Player1")
+    print(p1)
+    
+    var p2 = p1
+    //TODO: classes are reference type
+    nameModifier(p2)
+    print(p1)
+    print(p2)
+}
 
 
 /// test struct
