@@ -53,3 +53,19 @@
       ```
       Hello World
       ```
+
+## Creating package
+
+  - `mkdir hello; cd hello`
+  - `swift package init`
+    ```
+    Creating library package: hello
+    Creating Package.swift
+    Creating README.md
+    Creating .gitignore
+    Creating Sources/
+    Creating Sources/hello/hello.swift
+    Creating Tests/
+    Creating Tests/helloTests/
+    Creating Tests/helloTests/helloTests.swift
+    ```

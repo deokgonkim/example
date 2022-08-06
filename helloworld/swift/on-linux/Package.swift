@@ -9,9 +9,13 @@ let package = Package(
     dependencies: [
     ],
     targets: [
+        .target(
+            name: "Helloer"
+        ),
         .executableTarget(
             name: "Hello",
             dependencies: [
+                "Helloer"
             ]
         )
     ]

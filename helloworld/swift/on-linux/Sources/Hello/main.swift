@@ -1,6 +1,3 @@
-
-public func main() {
-    print("Hello World")
-}
+import Helloer
 
 main()
