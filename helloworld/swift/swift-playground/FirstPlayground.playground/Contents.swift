@@ -5,7 +5,9 @@ import UIKit
 
 //MARK: test class
 //testStructMutate()
-testClassModify()
+//testClassModify()
+//testClassReassignment()
+//testClassComparison()
 
 //MARK: test closure
 //testClosure()
@@ -25,6 +27,11 @@ testClassModify()
 //testStrSex()
 //testStrSexValue()
 
+//MARK: test error
+//testRuntimeError()
+//testNumberError()
+testMessageError()
+
 //MARK: test function
 //testFunction()
 //testVarArgs()
@@ -41,6 +48,9 @@ testClassModify()
 //MARK: test operators
 //testOperators()
 
+//MARK: test property
+//testPropertyWrapper()
+
 //MARK: test strings
 //testStringMutation()
 //testHan()
@@ -51,6 +61,8 @@ testClassModify()
 //testNameChangeClass()
 //testStructCreation()
 //testJson()
+//testStructComparison()
+//testLazyStruct()
 
 //MARK: test type
 //testTypes()
