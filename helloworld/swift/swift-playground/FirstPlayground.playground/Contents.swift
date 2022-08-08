@@ -30,7 +30,10 @@ import UIKit
 //MARK: test error
 //testRuntimeError()
 //testNumberError()
-testMessageError()
+//testMessageError()
+//testTryQ()
+//testTryE()
+testTryEwithDefer()
 
 //MARK: test function
 //testFunction()

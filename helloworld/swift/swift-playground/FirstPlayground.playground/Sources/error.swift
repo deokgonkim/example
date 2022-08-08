@@ -61,3 +61,71 @@ public func testMessageError() {
         print("error?", error)
     }
 }
+
+public func testTryQ() {
+    func throwingFunc(param: String) throws -> String {
+        if param == "VALID" {
+            return "VALID"
+        } else {
+            throw MyError.runtimeError
+        }
+    }
+    
+    let result = try? throwingFunc(param: "VALID")
+    if let result = result {
+        print(result)
+    } else {
+        print("got no result")
+    }
+    
+    let result2 = try? throwingFunc(param: "INVALID")
+    if let result2 = result2 {
+        print(result2)
+    } else {
+        print("got no result")
+    }
+}
+
+public func testTryE() {
+    func throwingFunc(param: String) throws -> String {
+        if param == "VALID" {
+            return "VALID"
+        } else {
+            throw MyError.runtimeError
+        }
+    }
+    
+    let result = try! throwingFunc(param: "VALID")
+    print(result)
+    
+    let result2 = try! throwingFunc(param: "INVALID")
+    print(result2)
+}
+
+public func testTryEwithDefer() {
+    func throwingFunc(param: String) throws -> String {
+        if param == "VALID" {
+            return "VALID"
+        } else {
+            throw MyError.runtimeError
+        }
+    }
+    
+    defer {
+        print("executing defer block")
+        do {
+            try throwingFunc(param: "NOTVALID")
+        } catch {
+            print("got error in defer \(error)")
+        }
+//        throwingFunc(param: "NOTVALID")
+        print("executing defer final")
+    }
+    
+    let result = try! throwingFunc(param: "VALID")
+    print(result)
+    
+//    let result2 = try! throwingFunc(param: "INVALID")
+//    print(result2)
+}
+
