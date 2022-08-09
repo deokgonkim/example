@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width,user-scalable=no,viewport-fit=cover" />
+    <meta http-equiv="Content-Style-Type" content="text/css" />
+    <title>Local Website</title>
+    <style type="text/css">
+        h1 {
+            font-size: 60px;
+        };
+        h2 {
+            font-size: 40px;
+        };
+        p {
+            font-size: 30px;
+        };
+    </style>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script type="text/javascript">
+        window.addEventListener('error', function (e) {
+            console.log(e)
+            alert(e.message)
+            debugger
+        })
+        function getFormData(object) {
+            const formData = new FormData();
+            Object.keys(object).forEach(key => formData.append(key, object[key]));
+            return formData;
+        }
+        
+        function alerter(dom) {
+            alert('Alert!!')
+            return false
+        }
+        
+        function confirmer(dom) {
+            if (confirm('Confirm!!')) {
+                // alert('confirmed')
+                document.getElementById('answer').innerHTML = 'Answer : Confirmed'
+            } else {
+                // alert('not confirmed')
+                document.getElementById('answer').innerHTML = 'Answer : Canceled'
+            }
+            return false
+        }
+      
+        window.addEventListener('unload', function(e) {
+            console.log('on unload')
+        })
+    </script>
+</head>
+<body>
+    <ul>
+    <li><a href="https://www.google.com/">Google</a></li>
+    <li><a href="https://www.dgkim.net/">dgkim</a></li>
+    <li><a href="https://public.dgkim.net/">public</a></li>
+    </ul>
+    <button onclick="return alerter(this);">Alert</button>
+    <button onclick="return confirmer(this);">Confirm</button>
+    <button id="answer">Answer : </button>
+    <hr />
+    <textarea id="output"></textarea>
+    
+    
+    <script type="text/javascript">
+        sendStringValueToIOS();
+        sendJsonValueToIOS();
+        
+        // This function sends a simple json value to iOS app
+        function sendJsonValueToIOS() {
+            // Here iOSNative is the name we passed from iOS app
+            window.webkit.messageHandlers.iOSNative.postMessage({Name : "John Doe"});
+        }
+    
+        // This function sends a string value to iOS app
+        function sendStringValueToIOS() {
+            // Here iOSNative is the name we passed from iOS app
+            window.webkit.messageHandlers.iOSNative.postMessage("Bla Bla Bla");
+        }
+    
+        function valueGotFromIOS(value) {
+            document.getElementById("output").innerHTML = value;
+        }
+    </script>
+</body>
+</html>
