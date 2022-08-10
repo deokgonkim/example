@@ -68,7 +68,9 @@ import UIKit
 //testSparrowWalk()
 //testSparrowsWalking()
 //testComplexProtocol()
-testSparrowIsSparrow()
+//testSparrowIsSparrow()
+//testFlyHigh()
+testAssociatedType()
 
 //MARK: test strings
 //testStringMutation()

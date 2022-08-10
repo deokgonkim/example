@@ -351,3 +351,93 @@ public func testSparrowIsSparrow() {
     var j = Sparrow("jack")
     testJack(j)
 }
+
+//MARK: optional protocol
+
+@objc protocol HighFlyer {
+    @objc optional func flyHigh()
+}
+
+@objc class OldBird: NSObject {
+    var name: String
+    
+    init(_ name: String) {
+        self.name = name
+    }
+    
+    func fly() {
+        print("OldBird is flying")
+    }
+}
+
+extension OldBird: HighFlyer {
+    func flyHigh() {
+        print("implementation of flyHigh")
+    }
+}
+
+
+public func testFlyHigh() {
+    func flyHigh(_ b: HighFlyer) {
+        b.flyHigh?()
+        var flyHighFunc = b.flyHigh!
+        flyHighFunc()
+        
+        var fnc: () -> Void
+        fnc = b.flyHigh!
+        fnc()
+    }
+    var bird = OldBird("bird")
+    bird.fly()
+    flyHigh(bird)
+}
+
+//MARK: associated type
+
+public class NumberHolder {
+    var n: Int
+    init(_ n: Int) {
+        self.n = n
+    }
+}
+
+public protocol Stack {
+    associatedtype Stackable
+    
+    func push(_ o: Self.Stackable)
+    func pop() -> Self.Stackable
+}
+
+public class MyIntStack: Stack {
+    
+    
+    init() {
+        stack = []
+    }
+    
+    public func push(_ o: NumberHolder) {
+        stack.append(o)
+    }
+    
+    public func pop() -> NumberHolder {
+        let lastValue = stack[stack.endIndex - 1]
+        stack.remove(at: stack.endIndex - 1)
+        print("what is number holder? \(NumberHolder.self)")
+        return lastValue
+    }
+    
+//    public typealias Stackable = Int
+    
+    var stack: [NumberHolder]
+}
+
+public func testAssociatedType() {
+    let mystack = MyIntStack()
+    print("stack initial \(mystack.stack)")
+    mystack.push(NumberHolder(30))
+    mystack.push(NumberHolder(40))
+    print("stack now \(mystack.stack)")
+    let popped = mystack.pop()
+    print("popped = \(popped)")
+    print("stack now \(mystack.stack)")
+}
