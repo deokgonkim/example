@@ -38,3 +38,138 @@ public func testPropertyWrapper() {
 //    nh.$n.wrappedValue = 303
     print(nh.n)
 }
+
+public func testPropertyObserver() {
+    struct SomeStruct {
+        var name: String {
+            didSet {
+                print("name is set to \(oldValue) => \(name)")
+            }
+            willSet {
+                print("name will be setted to \(newValue) from \(name)")
+            }
+        }
+        
+        init(_ name: String) {
+            self.name = name
+            print("SomeStruct initialized")
+        }
+        
+    }
+    
+    var s = SomeStruct("name1")
+    print(s)
+    print("s.name = \(s.name)")
+    s.name = "name2"
+    print("s.name = \(s.name)")
+}
+
+public func testPropertyObserverInherit() {
+    class SomeClass {
+        var name: String {
+            didSet {
+                print("name is set to \(oldValue) => \(name)")
+            }
+            willSet {
+                print("name will be setted to \(newValue) from \(name)")
+            }
+        }
+        
+        init() {
+            self.name = ""
+        }
+        
+        init(_ name: String) {
+            self.name = name
+            print("SomeStruct initialized")
+        }
+    }
+    
+    class SomeOtherClass: SomeClass {
+        var age: Int = 0
+//        override var name: String // {
+//            didSet {
+//                print("NAME IS SET TO \(oldValue) => \(name)")
+//            }
+//            get {
+//                self.name
+//            }
+//            set {
+//                self.name = "NEW NAME \(newValue)"
+//            }
+//        }
+        override init(_ name: String) {
+            super.init()
+            self.name = name
+            self.name = "__\(name)__"
+        }
+    }
+    
+    var s = SomeOtherClass("name1")
+    print(s)
+    print("s.name = \(s.name)")
+//    s.name = "name2"
+//    print("s.name = \(s.name)")
+    print("done")
+}
+
+
+public func testPropertyWrapper2() {
+    @propertyWrapper
+    struct IntWrapper {
+        var number: Int = 0
+        var wrappedValue: Int {
+            get {
+                return number
+            }
+            set {
+                number = newValue
+            }
+        }
+    }
+    
+    @propertyWrapper
+    struct TwelveOrLess {
+        private var number = 0
+        var wrappedValue: Int {
+            get { return number }
+            set { number = min(newValue, 12) }
+        }
+    }
+    
+    struct Some2Struct {
+        var n: Int = 0
+        var n2: Int {
+            get {
+                return n
+            }
+            set {
+                n2 = newValue
+            }
+        }
+    }
+    
+//    var k2 = Some2Struct()
+//    print("k2.n = \(k2.n)")
+//    print("k2.n2 = \(k2.n2)")
+
+    @propertyWrapper
+    struct Some3Struct {
+        var n: Int = 0
+        var wrappedValue: Int = 0
+        var projectedValue: Bool = false
+    }
+    
+    struct SomeStruct {
+        @Some3Struct var n: Int
+    }
+    
+    var k = SomeStruct()
+//    k.n = 30
+    print(k)
+    print(k.n)
+    k.n = 80
+    print(k.$n)
+    k.$n = true
+    print(k.$n)
+}

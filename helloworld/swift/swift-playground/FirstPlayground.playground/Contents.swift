@@ -33,7 +33,7 @@ import UIKit
 //testMessageError()
 //testTryQ()
 //testTryE()
-testTryEwithDefer()
+//testTryEwithDefer()
 
 //MARK: test function
 //testFunction()
@@ -43,6 +43,7 @@ testTryEwithDefer()
 //testSwapInt()
 //testRange()
 //testIfRange()
+//testAsyncFunction()
 
 //MARK: test macro
 //testMacro()
@@ -53,6 +54,13 @@ testTryEwithDefer()
 
 //MARK: test property
 //testPropertyWrapper()
+//testPropertyObserver()
+//testPropertyObserverInherit()
+//testPropertyWrapper2()
+
+//MARK: test protocol
+//testSparrow()
+testSparrowError()
 
 //MARK: test strings
 //testStringMutation()

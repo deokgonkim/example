@@ -179,3 +179,17 @@ public func testFunction() {
     testRange()
     testIfRange()
 }
+
+
+//MARK: async functions
+
+public func testAsyncFunction() {
+    func asyncFunc() async -> String {
+//        try await Task.sleep(until: .now + .seconds(2), clock: .continuous)
+        print("begin async function")
+        return "result"
+    }
+    
+//    let result = await asyncFunc()
+//    print("result is \(result)")
+}
