@@ -152,3 +152,67 @@ public func testClassComparison() {
         print("ch1 and ch2 are not same")
     }
 }
+
+public class RequiredClass: CustomStringConvertible {
+    var name: String
+    required init(_ name: String) {
+        self.name = name
+    }
+    required init() {
+        self.name = "NO NAME"
+    }
+    
+    public var description: String {
+        self.name
+    }
+}
+
+public func testRequiredClass() {
+    var c = RequiredClass()
+    print(c)
+    var d = RequiredClass("HAHAHA")
+    print(d)
+    var e = type(of: c).init("NONONONO")
+    print(e)
+}
+
+//MARK: failable initializer
+
+class NaturalNumberThrowing {
+    var n: Int = 0
+    init(_ n: Int) throws {
+        if n < 1 {
+            throw MyError.messageError(message: "\(n) is not Natural number")
+        } else {
+            self.n = n
+        }
+    }
+}
+
+class NaturalNumber {
+    var n: Int = 0
+    init?(_ n: Int) {
+        if n < 1 {
+            print("\(n) is not Natural number")
+            return nil
+        } else {
+            self.n = n
+        }
+    }
+}
+
+public func testFailableInitializer() {
+    do {
+        var n = try NaturalNumberThrowing(10)
+        print(n)
+        var n2 = try NaturalNumberThrowing(-1)
+        print(n2)
+    } catch {
+        print("Got error \(error)")
+    }
+    
+    var n3: NaturalNumber? = NaturalNumber(10)
+    print(n3)
+    var n4 = NaturalNumber(-2)
+    print(n4)
+}

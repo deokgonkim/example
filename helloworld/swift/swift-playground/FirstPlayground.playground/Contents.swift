@@ -8,6 +8,8 @@ import UIKit
 //testClassModify()
 //testClassReassignment()
 //testClassComparison()
+//testRequiredClass()
+//testFailableInitializer()
 
 //MARK: test closure
 //testClosure()
@@ -60,7 +62,13 @@ import UIKit
 
 //MARK: test protocol
 //testSparrow()
-testSparrowError()
+//testSparrowError()
+//testMutableProtocol()
+//testToggle()
+//testSparrowWalk()
+//testSparrowsWalking()
+//testComplexProtocol()
+testSparrowIsSparrow()
 
 //MARK: test strings
 //testStringMutation()
