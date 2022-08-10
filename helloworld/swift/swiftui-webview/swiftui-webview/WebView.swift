@@ -21,24 +21,14 @@ protocol WebViewHandlerDelegate {
     func receivedStringValueFromWebView(value: String)
 }
 
+
 // MARK: - WebView
-struct WebView: UIViewRepresentable, WebViewHandlerDelegate {
+struct WebView: UIViewRepresentable {
     
     @Binding var showAlert: Bool
     @Binding var isConfirm: Bool
     @Binding var alertMessage: String
     @Binding var confirmHandler: (Bool) -> Void
-    
-    func receivedJsonValueFromWebView(value: [String : Any?]) {
-        print("JSON value received from web is: \(value)")
-        for (k, v) in value {
-            print("Received key \(k) and value \(v)")
-        }
-    }
-    
-    func receivedStringValueFromWebView(value: String) {
-        print("String value received from web is: \(value)")
-    }
     
     var url: WebUrlType
     // Viewmodel object
@@ -84,7 +74,7 @@ struct WebView: UIViewRepresentable, WebViewHandlerDelegate {
         }
     }
     
-    class Coordinator : NSObject, WKNavigationDelegate, WKUIDelegate {
+    class Coordinator : NSObject {
         var parent: WebView
         var delegate: WebViewHandlerDelegate?
         var valueSubscriber: AnyCancellable? = nil
@@ -117,139 +107,11 @@ struct WebView: UIViewRepresentable, WebViewHandlerDelegate {
             valueSubscriber?.cancel()
             webViewNavigationSubscriber?.cancel()
         }
-        
-        func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-            // Get the title of loaded webcontent
-            webView.evaluateJavaScript("document.title") { (response, error) in
-                if let error = error {
-                    print("Error getting title")
-                    print(error.localizedDescription)
-                }
-                
-                guard let title = response as? String else {
-                    return
-                }
-                
-                self.parent.viewModel.showWebTitle.send(title)
-            }
-            
-            /* An observer that observes 'viewModel.valuePublisher' to get value from TextField and
-             pass that value to web app by calling JavaScript function */
-            valueSubscriber = parent.viewModel.valuePublisher.receive(on: RunLoop.main).sink(receiveValue: { value in
-                let javascriptFunction = "valueGotFromIOS(\(value));"
-                webView.evaluateJavaScript(javascriptFunction) { (response, error) in
-                    if let error = error {
-                        print("Error calling javascript:valueGotFromIOS()")
-                        print(error.localizedDescription)
-                    } else {
-                        print("Called javascript:valueGotFromIOS()")
-                    }
-                }
-            })
-            
-            // Page loaded so no need to show loader anymore
-            self.parent.viewModel.showLoader.send(false)
-        }
-        
-        /* Here I implemented most of the WKWebView's delegate functions so that you can know them and
-         can use them in different necessary purposes */
-        
-        func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
-            // Hides loader
-            parent.viewModel.showLoader.send(false)
-        }
-        
-        func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
-            // Hides loader
-            parent.viewModel.showLoader.send(false)
-        }
-        
-        func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
-            // Shows loader
-            parent.viewModel.showLoader.send(true)
-        }
-        
-        func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
-            // Shows loader
-            parent.viewModel.showLoader.send(true)
-            self.webViewNavigationSubscriber = self.parent.viewModel.webViewNavigationPublisher.receive(on: RunLoop.main).sink(receiveValue: { navigation in
-                switch navigation {
-                    case .backward:
-                        if webView.canGoBack {
-                            webView.goBack()
-                        }
-                    case .forward:
-                        if webView.canGoForward {
-                            webView.goForward()
-                        }
-                    case .reload:
-                        webView.reload()
-                }
-            })
-        }
-        
-        // This function is essential for intercepting every navigation in the webview
-        func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
-            // Suppose you don't want your user to go a restricted site
-            // Here you can get many information about new url from 'navigationAction.request.description'
-            if let host = navigationAction.request.url?.host {
-                if host == "restricted.com" {
-                    // This cancels the navigation
-                    decisionHandler(.cancel)
-                    return
-                }
-            }
-            
-            let cookieStorage = HTTPCookieStorage.shared
-            cookieStorage.cookieAcceptPolicy = .always
-            
-            let hostUrl = navigationAction.request.url
-            
-            if let url = hostUrl, url.scheme != "http", url.scheme != "https", url.scheme != "file" {
-                //self.showActivityIndicator(isShow: false)
-                debugPrint("Navigation Action url \(url.absoluteString)")
-                
-                if UIApplication.shared.canOpenURL(url) {
-                    UIApplication.shared.open(url, options: [:], completionHandler: nil)
-                } else {
-                    if url.absoluteString.contains("about:blank") == true {
-                        // #. WebView애서 Content를 열지 못함.
-                        //self.displayAlert(title: "알림", message: "웹페이지가 Open되지 않습니다.")
-                        debugPrint("about:blank 가 포함된 url로 redirection.")
-                        
-                    }
-                }
-                
-                decisionHandler(.cancel)
-                return
-            }
-            
-            // This allows the navigation
-            decisionHandler(.allow)
-        }
-        
-        func webView(_ webView: WKWebView,
-                     runJavaScriptConfirmPanelWithMessage message: String,
-                     initiatedByFrame frame: WKFrameInfo,
-                     completionHandler: @escaping (Bool) -> Void) {
-            print("received confirm : \(message)")
-            self.alertMessage.wrappedValue = message
-            self.showAlert.wrappedValue.toggle()
-            self.isConfirm.wrappedValue = true
-            self.confirmHandler.wrappedValue = completionHandler
-        }
-        
-        func webView(_ webView: WKWebView, runJavaScriptAlertPanelWithMessage message: String, initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping () -> Void) {
-            print("received alert: \(message)")
-            self.alertMessage.wrappedValue = message
-            self.showAlert.wrappedValue.toggle()
-            self.isConfirm.wrappedValue = false
-            completionHandler()
-        }
     }
 }
 
 // MARK: - Extensions
+// MARK: WKScriptMessageHandler
 extension WebView.Coordinator: WKScriptMessageHandler {
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         // Make sure that your passed delegate is called
@@ -263,7 +125,158 @@ extension WebView.Coordinator: WKScriptMessageHandler {
     }
 }
 
+// MARK: - WKNavigationDelegate
+extension WebView.Coordinator : WKNavigationDelegate {
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        // Get the title of loaded webcontent
+        webView.evaluateJavaScript("document.title") { (response, error) in
+            if let error = error {
+                print("Error getting title")
+                print(error.localizedDescription)
+            }
+            
+            guard let title = response as? String else {
+                return
+            }
+            
+            self.parent.viewModel.showWebTitle.send(title)
+        }
+        
+        /* An observer that observes 'viewModel.valuePublisher' to get value from TextField and
+         pass that value to web app by calling JavaScript function */
+        valueSubscriber = parent.viewModel.valuePublisher.receive(on: RunLoop.main).sink(receiveValue: { value in
+            let javascriptFunction = "valueGotFromIOS(\(value));"
+            webView.evaluateJavaScript(javascriptFunction) { (response, error) in
+                if let error = error {
+                    print("Error calling javascript:valueGotFromIOS()")
+                    print(error.localizedDescription)
+                } else {
+                    print("Called javascript:valueGotFromIOS()")
+                }
+            }
+        })
+        
+        // Page loaded so no need to show loader anymore
+        self.parent.viewModel.showLoader.send(false)
+    }
+    
+    /* Here I implemented most of the WKWebView's delegate functions so that you can know them and
+     can use them in different necessary purposes */
+    
+    func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
+        // Hides loader
+        parent.viewModel.showLoader.send(false)
+    }
+    
+    func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+        // Hides loader
+        parent.viewModel.showLoader.send(false)
+    }
+    
+    func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
+        // Shows loader
+        parent.viewModel.showLoader.send(true)
+    }
+    
+    func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
+        // Shows loader
+        parent.viewModel.showLoader.send(true)
+        self.webViewNavigationSubscriber = self.parent.viewModel.webViewNavigationPublisher.receive(on: RunLoop.main).sink(receiveValue: { navigation in
+            switch navigation {
+                case .backward:
+                    if webView.canGoBack {
+                        webView.goBack()
+                    }
+                case .forward:
+                    if webView.canGoForward {
+                        webView.goForward()
+                    }
+                case .reload:
+                    webView.reload()
+            }
+        })
+    }
+    
+    // This function is essential for intercepting every navigation in the webview
+    func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+        // Suppose you don't want your user to go a restricted site
+        // Here you can get many information about new url from 'navigationAction.request.description'
+        if let host = navigationAction.request.url?.host {
+            if host == "restricted.com" {
+                // This cancels the navigation
+                decisionHandler(.cancel)
+                return
+            }
+        }
+        
+        let cookieStorage = HTTPCookieStorage.shared
+        cookieStorage.cookieAcceptPolicy = .always
+        
+        let hostUrl = navigationAction.request.url
+        
+        if let url = hostUrl, url.scheme != "http", url.scheme != "https", url.scheme != "file" {
+            //self.showActivityIndicator(isShow: false)
+            debugPrint("Navigation Action url \(url.absoluteString)")
+            
+            if UIApplication.shared.canOpenURL(url) {
+                UIApplication.shared.open(url, options: [:], completionHandler: nil)
+            } else {
+                if url.absoluteString.contains("about:blank") == true {
+                    // #. WebView애서 Content를 열지 못함.
+                    //self.displayAlert(title: "알림", message: "웹페이지가 Open되지 않습니다.")
+                    debugPrint("about:blank 가 포함된 url로 redirection.")
+                    
+                }
+            }
+            
+            decisionHandler(.cancel)
+            return
+        }
+        
+        // This allows the navigation
+        decisionHandler(.allow)
+    }
+}
 
+// MARK: - WKUIDelegate
+extension WebView.Coordinator : WKUIDelegate {
+    // MARK: confirm handler
+    func webView(_ webView: WKWebView,
+                 runJavaScriptConfirmPanelWithMessage message: String,
+                 initiatedByFrame frame: WKFrameInfo,
+                 completionHandler: @escaping (Bool) -> Void) {
+        print("received confirm : \(message)")
+        self.alertMessage.wrappedValue = message
+        self.showAlert.wrappedValue.toggle()
+        self.isConfirm.wrappedValue = true
+        self.confirmHandler.wrappedValue = completionHandler
+    }
+    
+    // MARK: alert handler
+    func webView(_ webView: WKWebView, runJavaScriptAlertPanelWithMessage message: String, initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping () -> Void) {
+        print("received alert: \(message)")
+        self.alertMessage.wrappedValue = message
+        self.showAlert.wrappedValue.toggle()
+        self.isConfirm.wrappedValue = false
+        completionHandler()
+    }
+}
+
+// MARK: - WebViewHandlerDelegate extension
+extension WebView: WebViewHandlerDelegate {
+    func receivedJsonValueFromWebView(value: [String : Any?]) {
+        print("JSON value received from web is: \(value)")
+        for (k, v) in value {
+            print("Received key \(k) and value \(v)")
+        }
+    }
+    
+    func receivedStringValueFromWebView(value: String) {
+        print("String value received from web is: \(value)")
+    }
+}
+
+// MARK: - CLLocationManagerDelegate
 class LocationManager: NSObject, CLLocationManagerDelegate {
 
     static let shared = LocationManager()
@@ -272,7 +285,9 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
 
     public func requestLocationAuthorization() {
         self.locationManager.delegate = self
-        let currentStatus = CLLocationManager.authorizationStatus()
+        let currentStatus = locationManager.authorizationStatus
+//        self.locationManager.requestLocation()
+//        return
 
         // Only ask authorization if it was never asked before
         guard currentStatus == .notDetermined else { return }
@@ -295,5 +310,14 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
     public func locationManager(_ manager: CLLocationManager,
                                 didChangeAuthorization status: CLAuthorizationStatus) {
         self.requestLocationAuthorizationCallback?(status)
+    }
+    
+    public func locationManager(_ manager: CLLocationManager,
+                                didUpdateLocations locations: [CLLocation]) {
+        print("print didUpdateLocations \(locations)")
+    }
+    
+    public func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        print("print didFailWithError \(error)")
     }
 }

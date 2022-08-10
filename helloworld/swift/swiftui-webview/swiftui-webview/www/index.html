@@ -45,6 +45,18 @@
             }
             return false
         }
+        
+        function getLocation() {
+            navigator.geolocation.getCurrentPosition((position) => {
+                var latitude = position.coords.latitude;
+                var longitude = position.coords.longitude;
+                document.getElementById('output').innerHTML = JSON.stringify({
+                    longitude: position.coords.longitude,
+                    latitude: position.coords.latitude
+                }, null, 4)
+            })
+            return false
+        }
       
         window.addEventListener('unload', function(e) {
             console.log('on unload')
@@ -61,7 +73,9 @@
     <button onclick="return confirmer(this);">Confirm</button>
     <button id="answer">Answer : </button>
     <hr />
-    <textarea id="output"></textarea>
+    <a href="#" onclick="return getLocation();">Location?</a>
+    <hr />
+    <textarea id="output" rows="20" columns="80"></textarea>
     
     
     <script type="text/javascript">
