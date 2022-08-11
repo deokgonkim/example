@@ -26,9 +26,9 @@ protocol WebViewHandlerDelegate {
 struct WebView: UIViewRepresentable {
     
     @Binding var showAlert: Bool
-    @Binding var isConfirm: Bool
-    @Binding var alertMessage: String
-    @Binding var confirmHandler: (Bool) -> Void
+//    @Binding var isConfirm: Bool
+//    @Binding var alertMessage: String
+//    @Binding var confirmHandler: (Bool) -> Void
     
     var url: WebUrlType
     // Viewmodel object
@@ -36,7 +36,7 @@ struct WebView: UIViewRepresentable {
     
     // Make a coordinator to co-ordinate with WKWebView's default delegate functions
     func makeCoordinator() -> Coordinator {
-        var c = Coordinator(self, showAlert: self.$showAlert, isConfirm: self.$isConfirm, alertMessage: self.$alertMessage, confirmHandler: self.$confirmHandler)
+        let c = Coordinator(self, showAlert: self.$showAlert)
         return c
     }
     
@@ -77,27 +77,27 @@ struct WebView: UIViewRepresentable {
     class Coordinator : NSObject {
         var parent: WebView
         var delegate: WebViewHandlerDelegate?
-        var valueSubscriber: AnyCancellable? = nil
-        var webViewNavigationSubscriber: AnyCancellable? = nil
+        weak var valueSubscriber: AnyCancellable? = nil
+        weak var webViewNavigationSubscriber: AnyCancellable? = nil
         
         //TODO: I don't like this.
         //TODO: I want to use @Binding but, ...
         var showAlert: Binding<Bool>
-        var isConfirm: Binding<Bool>
-        var alertMessage: Binding<String>
-        var confirmHandler: Binding<(Bool) -> Void>
+//        var isConfirm: Binding<Bool>
+//        var alertMessage: Binding<String>
+//        var confirmHandler: Binding<(Bool) -> Void>
         
 //        init(_ uiWebView: WebView) {
 //            self.parent = uiWebView
 //            self.delegate = parent
 //        }
         
-        init(_ parent: WebView, showAlert: Binding<Bool>, isConfirm: Binding<Bool>, alertMessage: Binding<String>, confirmHandler: Binding<(Bool) -> Void>) {
+        init(_ parent: WebView, showAlert: Binding<Bool>) {
             self.parent = parent
             self.showAlert = showAlert
-            self.isConfirm = isConfirm
-            self.alertMessage = alertMessage
-            self.confirmHandler = confirmHandler
+//            self.isConfirm = isConfirm
+//            self.alertMessage = alertMessage
+//            self.confirmHandler = confirmHandler
             
             self.delegate = parent
         }
@@ -246,18 +246,24 @@ extension WebView.Coordinator : WKUIDelegate {
                  initiatedByFrame frame: WKFrameInfo,
                  completionHandler: @escaping (Bool) -> Void) {
         print("received confirm : \(message)")
-        self.alertMessage.wrappedValue = message
+//        self.alertMessage.wrappedValue = message
         self.showAlert.wrappedValue.toggle()
-        self.isConfirm.wrappedValue = true
-        self.confirmHandler.wrappedValue = completionHandler
+//        self.isConfirm.wrappedValue = true
+//        self.confirmHandler.wrappedValue = completionHandler
+        WebAlertHolder.isConfirm = true
+        WebAlertHolder.alertMessage = message
+        WebAlertHolder.confirmHandler = completionHandler
     }
     
     // MARK: alert handler
     func webView(_ webView: WKWebView, runJavaScriptAlertPanelWithMessage message: String, initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping () -> Void) {
         print("received alert: \(message)")
-        self.alertMessage.wrappedValue = message
+//        self.alertMessage.wrappedValue = message
         self.showAlert.wrappedValue.toggle()
-        self.isConfirm.wrappedValue = false
+//        self.isConfirm.wrappedValue = false
+        WebAlertHolder.isConfirm = false
+        WebAlertHolder.alertMessage = message
+//        WebAlertHolder.confirmHandler = {_ in}
         completionHandler()
     }
 }

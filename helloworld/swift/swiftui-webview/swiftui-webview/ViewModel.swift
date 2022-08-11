@@ -24,3 +24,9 @@ enum WebViewNavigation {
 enum WebUrlType {
     case localUrl, publicUrl
 }
+
+class WebAlertHolder {
+    static var isConfirm: Bool = false
+    static var alertMessage: String = ""
+    static var confirmHandler: (Bool) -> Void = {_ in}
+}

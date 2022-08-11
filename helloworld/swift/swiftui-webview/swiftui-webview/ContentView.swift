@@ -15,11 +15,11 @@ struct ContentView: View {
     @State var webTitle = ""
     
     @State var showAlert: Bool = false
-    @State var isConfirm: Bool = false
+//    @State var isConfirm: Bool = false
     
-    @State var alertMessage: String = "error"
+//    @State var alertMessage: String = "error"
         
-    @State var confirmHandler: (Bool) -> Void = {_ in }
+//    @State var confirmHandler: (Bool) -> Void = {_ in }
     
     // For WebView's forward and backward navigation
     var webViewNavigationBar: some View {
@@ -101,34 +101,42 @@ struct ContentView: View {
                 /* This is our WebView. Here if you pass .localUrl it will load LocalWebsite.html file
                  into the WebView and if you pass .publicUrl it will load the public website depending on
                  your url provided. See WebView implementation for more info. */
-                WebView(showAlert: self.$showAlert, isConfirm: self.$isConfirm, alertMessage: self.$alertMessage, confirmHandler: self.$confirmHandler, url: .localUrl, viewModel: viewModel)
-                            .alert(isPresented: self.$showAlert) { () -> Alert in
-                                var alert = Alert(title: Text(alertMessage))
-                                if self.showAlert == true {
-                                    if self.isConfirm {
-                                        alert = Alert(title: Text("알림"), message: Text(alertMessage), primaryButton: .default(Text("OK"), action: {
-                                            confirmHandler(true)
-                                        }), secondaryButton: .cancel({
-                                            confirmHandler(false)
-                                        }))
-                                    } else {
-                                        alert = Alert(title: Text("알림"), message: Text(alertMessage), dismissButton: .default(Text("OK"), action: {
-                                            confirmHandler(true)
-                                        }))
-                                    }
-                                } else {
-                                    print("now showing")
-                                }
-                                return alert;
-                            }
-                            .overlay (
-                    RoundedRectangle(cornerRadius: 4, style: .circular)
-                        .stroke(Color.gray, lineWidth: 0.5)
+                WebView(showAlert: self.$showAlert, url: .localUrl, viewModel: viewModel)
+                    .overlay (
+                        RoundedRectangle(cornerRadius: 4, style: .circular)
+                            .stroke(Color.gray, lineWidth: 0.5)
                 ).padding(.leading, 20).padding(.trailing, 20)
                 
                 webViewNavigationBar
             }.onReceive(self.viewModel.showLoader.receive(on: RunLoop.main)) { value in
                 self.showLoader = value
+            }
+            .alert(isPresented: self.$showAlert) {
+                () -> Alert in
+                var alert = Alert(title: Text(WebAlertHolder.alertMessage))
+                if self.showAlert == true {
+                    if WebAlertHolder.isConfirm {
+                        alert = Alert(title: Text("알림"),
+                                      message: Text(WebAlertHolder.alertMessage),
+                                      primaryButton: .default(Text("OK"),
+                                                              action: {
+                            WebAlertHolder.confirmHandler(true)
+                        }),
+                                      secondaryButton: .cancel({
+                            WebAlertHolder.confirmHandler(false)
+                        }))
+                    } else {
+//                        alert = Alert(title: Text("알림"),
+//                                      message: Text(WebAlertHolder.alertMessage),
+//                                      dismissButton: .default(Text("OK"),
+//                                                              action: {() in }))
+                        alert = Alert(title: Text("알림"),
+                                      message: Text(WebAlertHolder.alertMessage))
+                    }
+                } else {
+                    print("now showing")
+                }
+                return alert;
             }
             
             // A simple loader that is shown when WebView is loading any page and hides when loading is finished.
