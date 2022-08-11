@@ -41,3 +41,36 @@ public func testIo() {
     print(a)
     print(b)
 }
+
+
+public func testClosureCapture() {
+    class Person : CustomStringConvertible {
+        var name: String
+        init(name: String) {
+            self.name = name
+        }
+        deinit {
+            print("\(name) is deinitializing")
+        }
+        
+        var description: String {
+            name
+        }
+    }
+    
+    func sayHello(_ p: Person) -> (_ bla: String) -> Void {
+        var say_hi: (_ bla: String) -> Void = {
+            [unowned p]
+            (bla: String) in
+            print("Hello \(p) \(bla)")
+            return
+        }
+        
+        return say_hi
+    }
+    
+    var dgkim: Person? = Person(name: "dgkim")
+    var say_hi = sayHello(dgkim!)
+    dgkim = nil
+    say_hi("DGKIM")
+}

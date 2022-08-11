@@ -441,3 +441,42 @@ public func testAssociatedType() {
     print("popped = \(popped)")
     print("stack now \(mystack.stack)")
 }
+
+public func test() {
+    var a: [Any] = [10, 20]
+    a.append(30)
+    a.append("test")
+}
+
+func swapTwoValue<T>(_ a: inout T, _ b: inout T) {
+    (a, b) = (b, a)
+    swap(&a, &b)
+}
+
+func findIndex<T: Equatable>(of valueToFind: T, in array:[T]) -> Int? {
+    for (index, value) in array.enumerated() {
+        if value == valueToFind {
+            return index
+        }
+    }
+    return nil
+}
+
+
+protocol Arrayable {
+    associatedtype Element
+    func add(_ e: Element)
+    subscript(_ index: Int) -> Element { get }
+}
+
+struct NewArra : Arrayable {
+//    typealias Element = <#type#>
+    
+    func add(_ e: Int) {
+        
+    }
+    
+    subscript(_ index: Int) -> Int {
+        return 0
+    }
+}

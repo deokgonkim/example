@@ -10,10 +10,12 @@ import UIKit
 //testClassComparison()
 //testRequiredClass()
 //testFailableInitializer()
+//testUnowned()
 
 //MARK: test closure
 //testClosure()
 //testIo()
+testClosureCapture()
 
 //MARK: test control
 //testControlSwitch()
@@ -70,7 +72,7 @@ import UIKit
 //testComplexProtocol()
 //testSparrowIsSparrow()
 //testFlyHigh()
-testAssociatedType()
+//testAssociatedType()
 
 //MARK: test strings
 //testStringMutation()

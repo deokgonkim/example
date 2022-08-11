@@ -216,3 +216,67 @@ public func testFailableInitializer() {
     var n4 = NaturalNumber(-2)
     print(n4)
 }
+
+public func testOpaqueType() {
+    class Person {
+        var name: String
+        init(name: String) {
+            self.name = name
+        }
+    }
+    class WhitePerson : Person {
+        var new_name: String?
+    }
+    
+//    func willReturnPerson(_ p: WhitePerson) -> some Person {
+//        if p is Person {
+//            return p
+//        } else {
+//            return Person(name: p.name)
+//        }
+//    }
+    
+    
+}
+
+public func testUnowned() {
+    class Customer : CustomStringConvertible {
+        var name: String
+        var creditCard: CreditCard?
+        init(name: String) {
+            self.name = name
+        }
+        
+        deinit { print("\(name) is being deinitialized") }
+        
+        var description: String {
+            self.name
+        }
+    }
+    
+    class CreditCard : CustomStringConvertible {
+        var cardNumber: String
+        unowned var customer: Customer
+        
+        init(number cardNumber: String, customer: Customer) {
+            self.cardNumber = cardNumber
+            self.customer = customer
+        }
+        
+        deinit { print("\(cardNumber) is being deinitialized") }
+
+        
+        var description: String {
+            return "\(cardNumber) owned by \(customer)"
+        }
+    }
+    
+    var customer: Customer?
+    var creditCard: CreditCard
+    
+    customer = Customer(name: "Jack")
+    print(customer)
+    creditCard = CreditCard(number: "0000-0000", customer: customer!)
+    customer = nil
+    print(creditCard)
+}
