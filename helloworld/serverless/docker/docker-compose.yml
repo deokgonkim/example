@@ -1,0 +1,19 @@
+version: '3.4'
+
+services:
+  serverless-docker:
+    build: ./docker/serverless-docker
+    env_file:
+      - .env
+
+  serverless-docker-node:
+    build: ./docker/serverless-node
+    env_file:
+      - .env
+    command: [ "node.handler" ]
+
+  serverless-docker-python:
+    build: ./docker/serverless-python
+    env_file:
+      - .env
+    # command: [ "python.handler" ]

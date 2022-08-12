@@ -1,0 +1,70 @@
+service: serverless-docker
+frameworkVersion: '3'
+useDotenv: true
+
+provider:
+  name: aws
+  runtime: python3.8
+  region: ${env:AWS_REGION}
+  stage: ${opt:stage, "dev"}
+  tracing:
+    lambda: true
+    apiGateway: true
+  ecr:
+    # In this section you can define images that will be built locally and uploaded to ECR
+    images:
+      appimage:
+        path: ./docker/serverless-docker/
+      nodeimage:
+        path: ./docker/serverless-node/
+      pythonimage:
+        path: ./docker/serverless-python/
+  architecture: x86_64
+
+plugins:
+  - serverless-domain-manager
+
+custom:
+  customDomain:
+    http:
+      domainName: ${env:DOMAIN_NAME}
+      stage: ${self:provider.stage}
+      basePath: ''
+      certificateName: ${env:CERTIFICATE_NAME}
+      createRoute53Record: true
+      createRoute53IPv6Record: true
+      endpointType: 'regional'
+      securityPolicy: tls_1_2
+
+functions:
+  hello:
+    # handler: handler.hello
+    image:
+      name: appimage
+    events:
+      - httpApi:
+      # - http:
+          path: /
+          method: get
+
+  node:
+    image:
+      name: nodeimage
+      command:
+        - node.handler
+    events:
+      - httpApi:
+          path: /node
+          method: get
+
+  python:
+    image:
+      name: pythonimage
+      command:
+        - python.handler
+      entryPoint:
+        - '/lambda-entrypoint.sh'
+    events:
+      - httpApi:
+          path: /python
+          method: get

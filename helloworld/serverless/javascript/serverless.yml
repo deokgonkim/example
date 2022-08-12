@@ -1,0 +1,34 @@
+service: serverless-js
+frameworkVersion: '3'
+useDotenv: true
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+  region: ${env:AWS_REGION}
+  stage: ${opt:stage, "dev"}
+
+plugins:
+  - serverless-domain-manager
+ 
+custom:
+  customDomain:
+    http:
+      # domainName: http.serverless.foo.com
+      domainName: ${env:DOMAIN_NAME}
+      stage: ${self:provider.stage}
+      basePath: ''
+      certificateName: ${env:CERTIFICATE_NAME}
+      createRoute53Record: true
+      createRoute53IPv6Record: true
+      endpointType: 'regional'
+      securityPolicy: tls_1_2
+
+functions:
+  hello:
+    handler: handler.hello
+    events:
+      - httpApi:
+      # - http:
+          path: /
+          method: get
