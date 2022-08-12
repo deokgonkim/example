@@ -15,6 +15,7 @@ provider:
     images:
       appimage:
         path: ./docker/serverless-docker/
+        platform: linux/amd64
       nodeimage:
         path: ./docker/serverless-node/
       pythonimage:
