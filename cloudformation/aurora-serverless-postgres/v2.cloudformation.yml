@@ -1,0 +1,223 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'State: RDS Aurora Serverless PostgreSQL, a cloudonaut.io template'
+Metadata:
+  'AWS::CloudFormation::Interface':
+    ParameterGroups:
+    - Label:
+        default: 'RDS Parameters'
+      Parameters:
+      - EngineVersion
+      - DBSnapshotIdentifier
+      - DBName
+      - DBBackupRetentionPeriod
+      - DBMasterUsername
+      - DBMasterUserPassword
+      - SubDomainNameWithDot
+      - PreferredBackupWindow
+      - PreferredMaintenanceWindow
+      - EnableDataApi
+    - Label:
+        default: 'Serverless Parameters'
+      Parameters:
+      - AutoPause
+      - MaxCapacity
+      - MinCapacity
+      - SecondsUntilAutoPause
+    - Label:
+        default: 'VPC Parameters'
+      Parameters:
+      - VpcId
+      - ClientSecurityGroupId
+      - VpcSecurityGroupId
+      - SubnetsPrivate
+    - Label:
+        default: 'Route53 Parameters'
+      Parameters:
+      - HostedZoneId
+      - HostedZoneName
+    - Label:
+        default: 'Alert Parameters'
+      Parameters:
+      - AlertTopicArn
+    - Label:
+        default: 'Secrets Parameters'
+      Parameters:
+      - SecretArn
+Parameters:
+  DBSnapshotIdentifier:
+    Type: String
+    Default: ''
+  DBName:
+    Type: String
+    Default: ''
+  DBBackupRetentionPeriod:
+    Type: Number
+    MinValue: 1
+    MaxValue: 35
+    Default: 30
+  DBMasterUsername:
+    Type: 'String'
+    Default: master
+  DBMasterUserPassword:
+    Type: String
+    NoEcho: true
+    Default: ''
+  SubDomainNameWithDot:
+    Type: String
+    Default: 'aurora.'
+  EnableDataApi:
+    Description: 'Enable the Data API (https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/data-api.html).'
+    Type: String
+    AllowedValues: ['true', 'false']
+    Default: 'false'
+  AutoPause:
+    Description: 'Enable automatic pause for a Serverless Aurora cluster. A cluster can be paused only when it has no connections. If a cluster is paused for more than seven days, the cluster might be backed up with a snapshot. In this case, the cluster is restored when there is a request to connect to it.'
+    Type: String
+    AllowedValues: ['true', 'false']
+    Default: 'true'
+  MaxCapacity:
+    Description: 'The maximum capacity units for a Serverless Aurora cluster.'
+    Type: String
+    AllowedValues: [2, 4, 8, 16, 32, 64, 192, 384]
+    Default: 16
+  MinCapacity:
+    Description: 'The minimum capacity units for a Serverless Aurora cluster.'
+    Type: String
+    AllowedValues: [2, 4, 8, 16, 32, 64, 192, 384]
+    Default: 2
+  SecondsUntilAutoPause:
+    Description: 'The time, in seconds, before a Serverless Aurora cluster is paused.'
+    Type: Number
+    MinValue: 1
+    MaxValue: 86400
+    Default: 300
+  EngineVersion:
+    Description: 'Aurora Serverless PostgreSQL version.'
+    Type: String
+    AllowedValues: ['13.7', '14.3'] # aws rds describe-db-engine-versions --engine aurora-postgresql --query 'DBEngineVersions[?contains(SupportedEngineModes,`serverless`)]'
+  VpcId:
+    Type: String
+  ClientSecurityGroupId:
+    Type: String
+  VpcSecurityGroupId:
+    Type: String
+  SubnetsPrivate:
+    Type: String
+  HostedZoneId:
+    Type: String
+  HostedZoneName:
+    Type: String
+  AlertTopicArn:
+    Type: String
+  SecretArn:
+    Type: String
+Mappings:
+  EngineVersionMap:
+    '13.7':
+      ClusterParameterGroupFamily: 'aurora-postgresql13'
+    '14.3':
+      ClusterParameterGroupFamily: 'aurora-postgresql14'
+Resources:
+  SecretTargetAttachment:
+    Type: 'AWS::SecretsManager::SecretTargetAttachment'
+    Properties:
+      TargetId: !Ref DBCluster
+      SecretId: !Ref SecretArn
+      TargetType: 'AWS::RDS::DBCluster'
+  RecordSet:
+    Type: 'AWS::Route53::RecordSet'
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: !Sub
+      - '${SubDomainNameWithDot}${HostedZoneName}'
+      - SubDomainNameWithDot: !Ref SubDomainNameWithDot
+        HostedZoneName: !Ref HostedZoneName
+      ResourceRecords:
+      - !GetAtt 'DBCluster.Endpoint.Address'
+      TTL: 60
+      Type: CNAME
+  ClusterSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: !Ref 'AWS::StackName'
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 5432
+        ToPort: 5432
+        SourceSecurityGroupId: !Ref ClientSecurityGroupId
+      VpcId: !Ref VpcId
+  ClusterSecurityGroupInSSHBastion:
+    Type: 'AWS::EC2::SecurityGroupIngress'
+    Properties:
+      GroupId: !Ref ClusterSecurityGroup
+      IpProtocol: tcp
+      FromPort: 5432
+      ToPort: 5432
+      SourceSecurityGroupId: !Ref VpcSecurityGroupId
+  DBSubnetGroup:
+    Type: 'AWS::RDS::DBSubnetGroup'
+    Properties:
+      DBSubnetGroupDescription: !Ref 'AWS::StackName'
+      SubnetIds: !Split [',', !Sub '${SubnetsPrivate}']
+  DBClusterParameterGroup:
+    Type: 'AWS::RDS::DBClusterParameterGroup'
+    Properties:
+      Description: !Ref 'AWS::StackName'
+      Family: !FindInMap [EngineVersionMap, !Ref EngineVersion, ClusterParameterGroupFamily]
+      Parameters:
+        client_encoding: 'UTF8'
+  DBCluster:
+    DeletionPolicy: Snapshot # default
+    UpdateReplacePolicy: Snapshot
+    Type: 'AWS::RDS::DBCluster'
+    Properties:
+      BackupRetentionPeriod: !Ref DBBackupRetentionPeriod
+      DatabaseName: !Ref DBName
+      DBClusterParameterGroupName: !Ref DBClusterParameterGroup
+      DBSubnetGroupName: !Ref DBSubnetGroup
+      EnableHttpEndpoint: !Ref EnableDataApi
+      Engine: aurora-postgresql
+      EngineMode: serverless
+      EngineVersion: !Ref EngineVersion
+      # KmsKeyId: !Ref KmsKeyArn
+      MasterUsername: !Ref DBMasterUsername
+      MasterUserPassword: !Join ['', ['{{resolve:secretsmanager:', !Sub '${SecretArn}', ':SecretString:password}}']]
+      ScalingConfiguration:
+        AutoPause: !Ref AutoPause
+        MaxCapacity: !Ref MaxCapacity
+        MinCapacity: !Ref MinCapacity
+        SecondsUntilAutoPause: !Ref SecondsUntilAutoPause
+      #SnapshotIdentifier: !Ref DBSnapshotIdentifier
+      StorageEncrypted: true
+      VpcSecurityGroupIds:
+      - !Ref ClusterSecurityGroup
+  DatabaseClusterEventSubscription:
+    Type: 'AWS::RDS::EventSubscription'
+    Properties:
+      EventCategories:
+      - failover
+      - failure
+      - maintenance
+      SnsTopicArn: !Ref AlertTopicArn
+      SourceIds: [!Ref DBCluster]
+      SourceType: 'db-cluster'
+Outputs:
+  StackName:
+    Description: 'Stack name.'
+    Value: !Sub '${AWS::StackName}'
+  ClusterName:
+    Description: 'The name of the cluster.'
+    Value: !Ref DBCluster
+    Export:
+      Name: !Sub '${AWS::StackName}-ClusterName'
+  DNSName:
+    Description: 'The connection endpoint for the DB cluster.'
+    Value: !GetAtt 'DBCluster.Endpoint.Address'
+    Export:
+      Name: !Sub '${AWS::StackName}-DNSName'
+  SecurityGroupId:
+    Description: 'The security group used to manage access to RDS Aurora Serverless Postgres.'
+    Value: !Ref ClusterSecurityGroup
+    Export:
+      Name: !Sub '${AWS::StackName}-SecurityGroupId'
