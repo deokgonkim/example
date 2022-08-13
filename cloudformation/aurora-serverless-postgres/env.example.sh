@@ -1,0 +1,11 @@
+export ENGINE_VERSION=11.13
+export DB_NAME=aurora
+export DB_MASTER_USERNAME=master
+export VPC_ID=vpc-blablabla
+export CLIENT_SECURITY_GROUP_ID=sg-blabla
+export VPC_SECURITY_GROUP_ID=sg-blabla
+export SUBNETS_PRIVATE=subnet-bla1,subnet-bla2,subnet-bla3,subnet-bla4
+export HOSTED_ZONE_ID=ZBLABLA
+export HOSTED_ZONE_NAME=dgkim.net
+export ALERT_TOPIC_ARN=arn:aws:sns:ap-northeast-2:1234:blabla
+export SECRET_ARN=arn:aws:secretsmanager:ap-northeast-2:1234:secret:blabla
