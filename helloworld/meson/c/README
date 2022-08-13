@@ -1,0 +1,21 @@
+# c meson project example
+
+## prepare meson build directory
+
+```bash
+meson build
+```
+
+## run build
+
+```bash
+cd build
+ninja
+```
+
+## run project
+
+```bash
+cd build
+./hello
+```
