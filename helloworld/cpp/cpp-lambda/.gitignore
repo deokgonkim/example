@@ -1,2 +1,5 @@
 aws-lambda-cpp
+aws-sdk-cpp
 build
+build-encoder
+bin
