@@ -280,3 +280,84 @@ public func testUnowned() {
     customer = nil
     print(creditCard)
 }
+
+public class StackClass<Element> {
+    
+    var array: [Element] = []
+    
+    func push(_ element: Element) {
+        array.append(element)
+    }
+    
+    func pop() -> Element {
+        let lastValue = array[array.endIndex - 1]
+        array.remove(at: array.endIndex - 1)
+        return lastValue
+    }
+}
+
+extension StackClass {
+    var bottomItem: Element? {
+        if !array.isEmpty {
+            let firstItem = array[0]
+            return firstItem
+        } else {
+            return nil
+        }
+    }
+}
+
+extension StackClass where Element == String {
+    var firstString: Element? {
+        if array.isEmpty {
+            return nil
+        } else {
+            return array[0]
+        }
+    }
+}
+
+public func testStackClass() {
+    let numberStack = StackClass<Int>()
+    let stringStack = StackClass<String>()
+    
+    numberStack.push(3)
+    numberStack.push(1)
+    numberStack.push(2)
+    
+    let lastNumber = numberStack.pop()
+    
+    print("lastNumber: \(lastNumber)")
+//    print("firstString: \(numberStack.firstString)")
+    
+    stringStack.push("blabla")
+    stringStack.push("dgkim")
+    stringStack.push("foo")
+    
+    let lastString = stringStack.pop()
+    let secondString = stringStack.pop()
+    print("secondString : \(secondString)")
+    
+    let bottomString = stringStack.bottomItem
+    print("bottomString : \(bottomString)")
+    print("firstString: \(stringStack.firstString)")
+}
+
+
+protocol Tea {
+    associatedtype Identifier
+    var id: Identifier { get }
+}
+
+
+struct GreenTea: Tea {
+    let id: String
+    init(id: String) {
+        self.id = id
+    }
+}
+
+
+func favoriteTea() -> some Tea {
+    return GreenTea(id: "someId")
+}

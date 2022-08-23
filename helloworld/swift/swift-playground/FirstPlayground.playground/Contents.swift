@@ -1,5 +1,12 @@
 import UIKit
 
+//MARK: test api
+testAPIClient()
+//testStringToApiResponse()
+//testCombine1()
+//testSimpleCombine()
+//testSimpleCombine2()
+
 //MARK: test assert
 //testAssert()
 
@@ -11,11 +18,12 @@ import UIKit
 //testRequiredClass()
 //testFailableInitializer()
 //testUnowned()
+//testStackClass()
 
 //MARK: test closure
 //testClosure()
 //testIo()
-testClosureCapture()
+//testClosureCapture()
 
 //MARK: test control
 //testControlSwitch()
@@ -52,6 +60,10 @@ testClosureCapture()
 //MARK: test macro
 //testMacro()
 //testAvailable()
+
+//MARK: test opaquetype
+//testMakeTrapezoid()
+//testFlipJoin()
 
 //MARK: test operators
 //testOperators()
