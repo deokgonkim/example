@@ -1,0 +1,40 @@
+service: serverless-flask
+frameworkVersion: '3'
+useDotenv: true
+
+provider:
+  name: aws
+  runtime: python3.8
+  region: ${env:AWS_REGION}
+  stage: ${opt:stage, "dev"}
+  tracing:
+    lambda: true
+    apiGateway: true
+
+plugins:
+  - serverless-domain-manager
+  - serverless-python-requirements
+  - serverless-wsgi
+
+custom:
+  wsgi:
+    app: api.app
+  pythonRequirements:
+    dockerizePip: true
+  customDomain:
+    http:
+      domainName: ${env:DOMAIN_NAME}
+      stage: ${self:provider.stage}
+      basePath: ''
+      certificateName: ${env:CERTIFICATE_NAME}
+      createRoute53Record: true
+      createRoute53IPv6Record: true
+      endpointType: 'regional'
+      securityPolicy: tls_1_2
+
+functions:
+  api:
+    handler: wsgi_handler.handler
+    events:
+      - httpApi: ANY /
+      - httpApi: ANY /{proxy+}
