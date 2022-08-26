@@ -6,6 +6,6 @@ docker run \
      --rm \
      --volume "$(pwd)/:/src" \
      --workdir "/src/" \
-     --platform x86_64 \
+     --platform linux/amd64 \
      swift-lambda \
      ./package.sh swift-lambda
