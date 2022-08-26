@@ -1,0 +1,17 @@
+{
+  "name": "nodejs-pkg",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "build": "pkg index.js",
+    "build-mac-only": "pkg --targets node16-macos-arm64 -o nodejs-pkg index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "pkg": "^5.8.0"
+  }
+}

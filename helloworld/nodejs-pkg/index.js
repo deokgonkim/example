@@ -1,0 +1,12 @@
+
+const main = () => {
+    console.log("Hello World")
+}
+
+module.exports = {
+    main
+}
+
+if (require.main === module) {
+    main()
+}
