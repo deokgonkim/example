@@ -1,0 +1,23 @@
+---
+
+Parameters:
+  AppId:
+    Type: String
+  Stage:
+    Type: String
+
+Resources:
+  UserTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: !Sub "${AppId}-Users-${Stage}"
+        AttributeDefinitions:
+          - AttributeName: uid
+            AttributeType: S
+        KeySchema:
+          - AttributeName: uid
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+        # ProvisionedThroughput:
+        #   ReadCapacityUnits: 1
+        #   WriteCapacityUnits: 1
