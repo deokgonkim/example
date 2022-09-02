@@ -1,0 +1,31 @@
+service: example-sqs-partial-failure
+frameworkVersion: "3"
+useDotenv: true
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+  region: ${env:AWS_REGION, "ap-northeast-2"}
+  stage: ${opt:stage, "dev"}
+  tracing:
+    lambda: true
+    apiGateway: true
+  environment:
+    STAGE: ${env:STAGE}
+
+functions:
+  handler:
+    handler: handler.handle
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt: [ExampleSQS, Arn]
+          batchSize: 10 # SQS Messages will be delivered at most 10 messages.
+          functionResponseType: ReportBatchItemFailures
+
+resources: # CloudFormation template syntax from here on.
+  Resources:
+    ExampleSQS:
+      Type: "AWS::SQS::Queue"
+      Properties:
+        QueueName: ExampleSQS-${self:provider.stage}
