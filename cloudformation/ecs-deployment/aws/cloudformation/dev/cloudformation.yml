@@ -1,0 +1,197 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Service deployment Resources
+Parameters:
+  ServiceName:
+    Type: String
+    Description: "Servie name"
+  Stage:
+    Type: String
+    Description: "Deployment stage"
+  VpcId:
+    Type: String
+    Description: "VPC ID"
+  PublicSubnet1:
+    Type: String
+    Description: "Public Subnet 1"
+  PublicSubnet2:
+    Type: String
+    Description: "Public Subnet 2"
+  # PublicSubnet3:
+  #   Type: String
+  #   Description: "Public Subnet 3"
+  PublicLoadBalancerSG:
+    Type: String
+    Description: "Public Loadbalancers Security Group"
+  CertificateArn:
+    Type: String
+    Description: "Certificates to use for Public LoadBalancer"
+  HostedZoneId:
+    Type: String
+    Description: "Route53 Hosted zone Id"
+  HostedZoneName:
+    Type: String
+    Description: "Route53 Hosted Zone Name(Domain Name)"
+  SubDomainName:
+    Type: String
+    Description: "Subdomain name to use"
+
+  HealthCheckPath:
+    Type: String
+    Default: '/'
+    Description: "Default HTTP Health Check path"
+
+Resources:
+  ## CloudWatch
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/ecs/${ServiceName}-${Stage}
+  
+  ## LoadBalancers
+  PublicLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: !Sub ${ServiceName}-${Stage}
+      Scheme: internet-facing
+      LoadBalancerAttributes:
+        - Key: idle_timeout.timeout_seconds
+          Value: '30'
+      Subnets:
+        # The load balancer is placed into the public subnets, so that traffic
+        # from the internet can reach the load balancer directly via the internet gateway
+        # Import Values from VPC CloudTemplate Output values.
+        # - Fn::ImportValue: !Sub ${Prefix}:PublicSubnetOne
+        # - Fn::ImportValue: !Sub ${Prefix}:PublicSubnetTwo
+        # Or define in this cloudformation template
+        - !Ref PublicSubnet1
+        - !Ref PublicSubnet2
+        # - !Ref PublicSubnet3
+      SecurityGroups: [!Ref 'PublicLoadBalancerSG']
+      Tags:
+        - Key: "Name"
+          Value: !Sub ${ServiceName}-${Stage}
+
+  PublicLoadBalancerListenerHTTP:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - TargetGroupArn: !Ref 'TargetGroup1'
+          Type: 'forward'
+      LoadBalancerArn: !Ref 'PublicLoadBalancer'
+      Port: 80
+      Protocol: HTTP
+  
+  PublicLoadBalancerListenerHTTPs:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - TargetGroupArn: !Ref 'TargetGroup1'
+          Type: 'forward'
+      LoadBalancerArn: !Ref 'PublicLoadBalancer'
+      Port: 443
+      Protocol: HTTPS
+      Certificates:
+        - CertificateArn: !Ref CertificateArn
+
+  TargetGroup1:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Sub ${ServiceName}-${Stage}-tg1
+      HealthCheckIntervalSeconds: 40
+      HealthCheckPath: !Ref 'HealthCheckPath'
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 30
+      HealthyThresholdCount: 2
+      TargetType: ip
+      Protocol: HTTP
+      Port: 80
+      UnhealthyThresholdCount: 2
+      VpcId:
+        # Import VPC ID from VPC CloudFormation
+        # Fn::ImportValue: !Sub AppConfigBlog:${EnvironmentName}:VpcId
+        # Or from parameters
+        !Ref VpcId
+
+  # second target group is required for CodeDeploy Blue/Green Deploy
+  TargetGroup2:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Sub ${ServiceName}-${Stage}-tg2
+      HealthCheckIntervalSeconds: 40
+      HealthCheckPath: !Ref 'HealthCheckPath'
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 30
+      HealthyThresholdCount: 2
+      TargetType: ip
+      Protocol: HTTP
+      Port: 80
+      UnhealthyThresholdCount: 2
+      VpcId:
+        # Import VPC ID from VPC CloudFormation
+        # Fn::ImportValue: !Sub AppConfigBlog:${EnvironmentName}:VpcId
+        # Or from parameters
+        !Ref VpcId
+  
+  ## ECS
+  ECSCluster:
+    Type: AWS::ECS::Cluster
+    Properties: 
+      ClusterName: !Sub ${ServiceName}-${Stage}-cluster
+
+  TaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub ${ServiceName}-${Stage}
+      Cpu: 1024 # 1 vCPU
+      Memory: 2048 # 2 GB
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      ExecutionRoleArn:
+        Fn::ImportValue: !Sub ${ServiceName}:TaskExecutionRoleArn
+      TaskRoleArn:
+        Fn::ImportValue: !Sub ${ServiceName}:ServiceRoleArn
+      ContainerDefinitions:
+        - Name: !Ref 'ServiceName'
+          # Cpu: !Ref 'ContainerCpu'
+          # Memory: !Ref 'ContainerMemory'
+          # Specify Image manually
+          # Image: !Ref 'ImageUrl'
+          # Or Specify Shared Repositories
+          Image: !Sub
+            - '${REPOSITORY_URI}:latest'
+            - REPOSITORY_URI:
+                Fn::ImportValue: !Sub ${ServiceName}:RepositoryUri
+          PortMappings:
+            - ContainerPort: 3000 # Nodejs Default port
+          Environment:
+            # the other environment variables are loaded from SecretsManager
+            - Name: SERVICE_NAME
+              Value: !Ref ServiceName
+            - Name: STAGE
+              Value: !Ref Stage
+            
+          LogConfiguration:
+            LogDriver: 'awslogs'
+            Options:
+              awslogs-group: !Sub /aws/ecs/${ServiceName}-${Stage}
+              awslogs-region: !Ref 'AWS::Region'
+              awslogs-stream-prefix: !Ref 'ServiceName'
+
+  ## Route53 Domain mapping
+  RecordSet:
+    Type: 'AWS::Route53::RecordSet'
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: !Sub ${SubDomainName}.${HostedZoneName}
+      ResourceRecords:
+      - !GetAtt 'PublicLoadBalancer.DNSName'
+      TTL: 60
+      Type: CNAME
+
+Outputs:
+  ServiceUrl:
+    Description: The url for service
+    Value: !Sub ${SubDomainName}.${HostedZoneName}
+    Export:
+      Name: !Sub ${ServiceName}:${Stage}:ServiceUrl
