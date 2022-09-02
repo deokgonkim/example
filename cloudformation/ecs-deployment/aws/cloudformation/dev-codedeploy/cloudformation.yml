@@ -1,0 +1,47 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Service Shared Resources
+Parameters:
+  ServiceName:
+    Type: String
+    Description: "Servie name"
+  Stage:
+    Type: String
+    Description: "Deployment stage"
+  ElbName:
+    Type: String
+    Description: "Application ELB NAME"
+
+Resources:
+  # code deploy role can be shared all across services
+  CodeDeployServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: [codedeploy.amazonaws.com]
+            Action: ['sts:AssumeRole']
+      Path: /
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AWSCodeDeployRole'
+
+  CodeDeployApplication: 
+    Type: AWS::CodeDeploy::Application 
+    Properties:
+      ApplicationName: !Sub ${ServiceName}-${Stage}
+      ComputePlatform: ECS
+
+  CodeDeployDeploymentGroup:
+    Type: 'AWS::CodeDeploy::DeploymentGroup'
+    Properties: 
+      ApplicationName: !Ref CodeDeployApplication 
+      # DeploymentConfigName: CodeDeployDefault.LambdaCanary10Percent5Minutes
+      LoadBalancerInfo:
+        ElbInfoList:
+          - Name: !Ref ElbName
+      DeploymentStyle: 
+        DeploymentType: BLUE_GREEN
+        DeploymentOption: WITH_TRAFFIC_CONTROL 
+      ServiceRoleArn: 
+        Fn::GetAtt: [ CodeDeployServiceRole, Arn ]
