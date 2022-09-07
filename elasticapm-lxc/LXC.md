@@ -39,10 +39,19 @@ lxc config device add elasticsearch elasticsearch9200 proxy listen=tcp:0.0.0.0:9
 
 ```bash
 lxc launch ubuntu:20.04 kibana
+lxc config device add kibana kibana5601 proxy listen=tcp:0.0.0.0:5601 connect=tcp:0.0.0.0:5601
 ```
 
 ### Fleet server
 
 ```bash
-lxc launch ubuntu:20.04 fleet_server
+lxc launch ubuntu:20.04 fleet-server
+lxc config device add fleet-server fleet8220 proxy listen=tcp:0.0.0.0:8220 connect=tcp:0.0.0.0:8220
+```
+
+### APM Server
+
+```bash
+lxc launch ubuntu:20.04 apm-server
+lxc config device add apm-server apm8200 proxy listen=tcp:0.0.0.0:8200 connect=tcp:0.0.0.0:8200
 ```
