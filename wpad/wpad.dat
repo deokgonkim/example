@@ -1,0 +1,52 @@
+function FindProxyForURL(url, host)
+{
+    if (isPlainHostName(host))
+        return "DIRECT";
+    if (!isResolvable(host))
+        return "DIRECT";
+        if (url.substring(0, 5) == "http:")
+                return "PROXY 192.168.1.135:3128; DIRECT";
+        if (url.substring(0, 6) == "https:")
+                return "PROXY 192.168.1.135:3128; DIRECT";
+    return "DIRECT";
+}
+
+function FindProxyForURL(url, host)
+{
+    if (isPlainHostName(host))
+        return "DIRECT";
+    if (!isResolvable(host))
+        return "DIRECT";
+        if (url.substring(0, 5) == "http:")
+                return "PROXY ny.us.ircache.net:3128; DIRECT";
+        if (url.substring(0, 4) == "ftp:")
+                return "PROXY ny.us.ircache.net:3128; DIRECT";
+        if (url.substring(0, 7) == "gopher:")
+                return "PROXY ny.us.ircache.net:3128; DIRECT";
+    return "DIRECT";
+}
+
+function FindProxyForURL(url, host)
+{
+    if (isPlainHostName(host))
+        return "DIRECT";
+    if (!isResolvable(host))
+        return "DIRECT";
+    if (url.substring(0, 5) == "http:")
+        return "PROXY random.us.ircache.net:3128; DIRECT";
+    if (url.substring(0, 4) == "ftp:")
+        return "PROXY random.us.ircache.net:3128; DIRECT";
+    if (url.substring(0, 7) == "gopher:")
+        return "PROXY random.us.ircache.net:3128; DIRECT";
+    return "DIRECT";
+}
+
+function FindProxyForURL(url, host)
+{
+//    if(dnsDomainIs(host, "myhost.dgkim.net") || dnsDomainIs(host, "192.168.1.135") || dnsDomainIs(host, "localhost") || dnsDomainIs(host, "127.0.0.1"))
+//    {
+         return "DIRECT";
+//    } else {
+//         return "PROXY squid.dgkim.net:3128; DIRECT";
+//    }
+}
