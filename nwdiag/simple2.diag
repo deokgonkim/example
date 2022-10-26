@@ -1,0 +1,11 @@
+nwdiag {
+  network internal {
+    address = "192.168.0.0/24";
+
+    //www [address = "192.168.0.12"];
+    //raspberrypi [address = "192.168.0.78"];
+    //macbookpro [address = "192.168.0.3"];
+
+    iphone [address = "192.168.0.13"];
+  }
+}
