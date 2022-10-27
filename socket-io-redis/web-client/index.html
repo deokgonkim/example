@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <script src="https://cdn.socket.io/4.5.3/socket.io.min.js" integrity="sha384-WPFUvHkB1aHA5TDSZi6xtDgkF0wXJcIIxXhC6h8OT8EH3fC5PWro5pWJ1THjcfEi" crossorigin="anonymous"></script>
+</head>
+
+<body>
+    <form name="form1" action="#" method="POST">
+        Topic <input type="text" name="topic" value="test" /><br />
+        Message <input type="text" name="message" value="" /><br />
+        <input type="submit" />
+    </form>
+    <button id="joinButton">Join</button>
+    <div id="root"></div>
+    <script>
+        fetch('./config.json').then((response) => {
+            return response.json();
+        }).then((config) => {
+            let url = config.WSS_URL;
+            
+            window.socket = io(url);
+            window.socket.on('connect', () => {
+                console.log('on connect', socket.id);
+                // window.socket.emit('join', document.querySelector('[name=topic]').value);
+            });
+            window.socket.on('message', (message) => {
+                console.log(message);
+                const root = document.querySelector('div#root');
+                const row = document.createElement('p');
+                row.innerHTML = message;
+                root.appendChild(row);
+            });
+            document.form1.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const topic = document.querySelector('[name=topic]').value;
+                const message = document.querySelector('[name=message]').value;
+                window.socket.emit('message', topic, message);
+                return false;
+            });
+
+            document.querySelector('#joinButton').addEventListener('click', (e) => {
+                e.preventDefault();
+                const topicName = prompt('TopicName?');
+                console.log('Joining', topicName);
+                window.socket.emit('join', topicName);
+            })
+        })
+    </script>
+</body>
+
+</html>
