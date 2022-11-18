@@ -1,0 +1,12 @@
+version: '3.7'
+
+services:
+  locust_master:
+    build:
+      context: .
+    ports:
+      - 8089:8089
+    volumes:
+      - .:/app/
+    # command: |
+    #   bash -c "cd /app;locust -f helloworld.py"
