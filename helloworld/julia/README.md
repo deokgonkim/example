@@ -1,5 +1,13 @@
 # hello world julia
 
+## Install
+
+julia is available on ubuntu
+
+```bash
+apt install julia
+```
+
 ## Run
 
 ```bash
