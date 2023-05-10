@@ -1,0 +1,10 @@
+version: '3.7'
+
+services:
+  app:
+    build:
+      context: .
+    volumes:
+      - ./data/:/app/data/
+    command: |
+      bash -c "ls -l /app/data;npm run test"

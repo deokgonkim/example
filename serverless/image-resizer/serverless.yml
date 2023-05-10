@@ -1,0 +1,71 @@
+service: image-resizer
+frameworkVersion: '3'
+useDotenv: true
+
+provider:
+  name: aws
+  runtime: nodejs16.x
+  region: ${env:AWS_REGION, "ap-northeast-2"}
+  stage: ${opt:stage, "dev"}
+  deploymentBucket:
+    # Name of an existing bucket to use (default: created by serverless)
+    name: ${env:DEPLOYMENT_BUCKET}
+    # On deployment, serverless prunes artifacts older than this limit (default: 5)
+    maxPreviousDeploymentArtifacts: 5
+    # Prevents public access via ACLs or bucket policies (default: false)
+    # Note: the deployment bucket is not public by default. These are additional ACLs.
+    blockPublicAccess: true
+    # Skip the creation of a default bucket policy when the deployment bucket is created (default: false)
+    # skipPolicySetup: true
+    # Enable bucket versioning (default: false)
+    # versioning: true
+    # Server-side encryption method
+    serverSideEncryption: AES256
+    # For server-side encryption
+    # sseKMSKeyId: arn:aws:kms:us-east-1:xxxxxxxxxxxx:key/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa
+    # For server-side encryption with custom keys
+    # sseCustomerAlgorithim: AES256
+    # sseCustomerKey: string
+    # sseCustomerKeyMD5: md5sum
+  tracing:
+    lambda: true
+    apiGateway: true
+  iam:
+    role:
+      statements:
+        - Effect: 'Allow'
+          Resource: '*'
+          Action: 's3:*'
+  timeout: 60 # optional, in seconds, default is 6
+  environment:
+    STAGE: ${self:provider.stage}
+
+package:
+  exclude:
+    - data/**
+
+functions:
+  resize:
+    handler: handler.resize
+    # layers:
+    #   - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:layer:sharp-heic:1"
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt: [ImageResizeQueue, Arn]
+          batchSize: 1
+          # batchSize: 10 # SQS Messages will be delivered at most 10 messages.
+          # functionResponseType: ReportBatchItemFailures
+
+  test:
+    handler: test.test
+    # layers:
+    #   - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:layer:sharp-heic:2"
+
+resources: # CloudFormation template syntax from here on.
+  Resources:
+    ImageResizeQueue:
+      Type: "AWS::SQS::Queue"
+      Properties:
+        QueueName: ImageResizeQueue-${self:provider.stage}
+        VisibilityTimeout: 60

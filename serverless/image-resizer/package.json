@@ -1,0 +1,30 @@
+{
+  "name": "image-resizer",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "scripts": {
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest $@",
+    "deploy-dev": "sls deploy --stage dev",
+    "deploy-prod": "sls deploy --stage prod"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/deokgonkim/exmple.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/deokgonkim/example/issues"
+  },
+  "homepage": "https://github.com/deokgonkim/example#readme",
+  "devDependencies": {
+    "jest": "^29.3.1",
+    "serverless": "^3.25.1"
+  },
+  "dependencies": {
+    "aws-sdk": "^2.1271.0",
+    "heic-convert": "^1.2.4",
+    "sharp": "^0.31.2"
+  }
+}
