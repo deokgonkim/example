@@ -22,7 +22,7 @@ const S3_UPLOAD_SAMPLE_RESPONSE = {
  * @returns 
  */
 const extractBucketAndKey = (s3Url) => {
-    const matching = s3Url.match(/s3:\/\/([a-zA-Z0-9-_]*)\/(.*)/);
+    const matching = s3Url.match(/s3:\/\/([a-zA-Z0-9-_\.]*)\/(.*)/);
     if (matching == null) {
         throw new Error(`Failed to parse S3 url ${s3Url}`);
     }
@@ -41,7 +41,7 @@ const s3GetObject = async (s3Url) => {
     if (!s3Url.startsWith('s3://')) {
         throw new Error(`Invalid S3 url ${s3Url}`);
     }
-    const matching = s3Url.match(/s3:\/\/([a-zA-Z0-9-_]*)\/(.*)/);
+    const matching = s3Url.match(/s3:\/\/([a-zA-Z0-9-_\.]*)\/(.*)/);
     if (matching == null) {
         throw new Error(`Failed to parse S3 url ${s3Url}`);
     }
@@ -57,7 +57,7 @@ const s3GetObjectThumbnail = async (s3Url, size) => {
     if (!s3Url.startsWith('s3://')) {
         throw new Error(`Invalid S3 url ${s3Url}`);
     }
-    const matching = s3Url.match(/s3:\/\/([a-zA-Z0-9-_]*)\/(.*)/);
+    const matching = s3Url.match(/s3:\/\/([a-zA-Z0-9-_\.]*)\/(.*)/);
     if (matching == null) {
         throw new Error(`Failed to parse S3 url ${s3Url}`);
     }
@@ -95,7 +95,7 @@ const moveToTrash = async (s3Url) => {
     if (!s3Url.startsWith('s3://')) {
         throw new Error(`Invalid S3 url ${s3Url}`);
     }
-    const matching = s3Url.match(/s3:\/\/([a-zA-Z0-9-_]*)\/(.*)/);
+    const matching = s3Url.match(/s3:\/\/([a-zA-Z0-9-_\.]*)\/(.*)/);
     if (matching == null) {
         throw new Error(`Failed to parse S3 url ${s3Url}`);
     }

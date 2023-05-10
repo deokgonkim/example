@@ -75,6 +75,7 @@ export const resize = async (event) => {
       }
 
       const { bucket, key } = s3service.extractBucketAndKey(s3url);
+      console.log('bucket', bucket, 'key', key);
 
       const s3Object = await s3service.s3GetObject(s3url);
       if (s3Object == null) {
