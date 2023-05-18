@@ -1,0 +1,35 @@
+esphome:
+  name: livingroom-d1-mini
+
+esp8266:
+  board: d1_mini
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  password: ""
+
+ota:
+  password: ""
+
+wifi:
+  ssid: "REMOVED"
+  password: "REMOVED"
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Livingroom Fallback Hotspot"
+    password: "REMOVED"
+
+captive_portal:
+    
+sensor:
+  - platform: dht
+    pin: D4
+    temperature:
+      name: "Living Room Temperature"
+    humidity:
+      name: "Living Room Humidity"
+    update_interval: 60s

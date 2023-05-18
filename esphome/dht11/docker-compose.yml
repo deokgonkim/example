@@ -1,0 +1,10 @@
+version: '3'
+services:
+  esphome:
+    container_name: esphome
+    image: ghcr.io/esphome/esphome
+    volumes:
+      - ./config:/config
+    restart: always
+    privileged: true
+    network_mode: host
