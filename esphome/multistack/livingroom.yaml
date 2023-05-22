@@ -37,6 +37,13 @@ sensor:
   - platform: dallas
     address: 0xb1041733a098ff28
     name: "Living Room DS18B20 Temperature"
+  # using I2C bus
+  - platform: bmp085
+    temperature:
+      name: "Living Room BMP180 Temperature"
+    pressure:
+      name: "Living Room BMP180 Pressure"
+    update_interval: 60s
 
 switch:
   - platform: gpio
@@ -46,3 +53,14 @@ switch:
 
 dallas:
   - pin: GPIO4
+
+# https://esphome.io/components/i2c.html
+# https://randomnerdtutorials.com/esp8266-pinout-reference-gpios/
+i2c:
+  # Wemos D1 mini default
+  # sda: 4 # GPIO4 (D2)
+  # scl: 5 # GPIO5 (D1)
+  sda: 12 # GPIO12 (D6)
+  scl: 13 # GPIO13 (D7)
+  scan: true
+  id: bus_a
