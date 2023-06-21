@@ -23,11 +23,22 @@ def chat_completion():
         }])
 
 
+def completion():
+    return openai.Completion.create(
+        model="text-davinci-003",
+        prompt="Write a long story about moon",
+        max_tokens=300
+    )
+
+
 setup()
 
 # models = model_list()
 # pprint(models)
 
-hello = chat_completion()
-pprint(hello)
+# hello = chat_completion()
+# pprint(hello)
+
+response = completion()
+pprint(response)
 
