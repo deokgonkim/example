@@ -31,3 +31,7 @@ deployment was successful but, endpoint url is not working
 Error: Forbidden
 Your client does not have permission to get URL /gcp-hello-dev-helloWorld from this server.
 ```
+
+## **update**
+
+- reference : https://stackoverflow.com/questions/67095704/deploy-allow-unauthenticated-gcp-functions-with-serverless

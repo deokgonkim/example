@@ -6,10 +6,22 @@ provider:
   name: google
   runtime: 'nodejs14'
   project: ${env:GCP_PROJECT_ID}
+  region: ${env:GCP_REGION}
   credentials: ${env:GCP_ADC_CREDENTIALS_FILE} # path must be absolute
+  stage: ${opt:stage, "dev"}
+
+custom:
+  scripts:
+    commands:
+      # make-public-function: gcloud functions add-iam-policy-binding ${self:service}-${self:provider.stage}-${opt:opt.function, "functionName"} --member="allUsers" --role="roles/cloudfunctions.invoker" --project=${self:provider.project} --region=${self:provider.region} | xargs echo
+      make-public-function: gcloud functions add-iam-policy-binding ${self:service}-${self:provider.stage}-helloWorld --member="allUsers" --role="roles/cloudfunctions.invoker" --project=${self:provider.project} --region=${self:provider.region} | xargs echo
+
+    hooks:   
+      'after:deploy:deploy': npx sls make-public-function --stage ${self:provider.stage}
 
 plugins:
   - serverless-google-cloudfunctions
+  - serverless-plugin-scripts
 
 package:
   exclude:
