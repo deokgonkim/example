@@ -1,0 +1,24 @@
+service: gcp-hello
+
+useDotenv: true
+
+provider:
+  name: google
+  runtime: 'nodejs14'
+  project: ${env:GCP_PROJECT_ID}
+  credentials: ${env:GCP_ADC_CREDENTIALS_FILE} # path must be absolute
+
+plugins:
+  - serverless-google-cloudfunctions
+
+package:
+  exclude:
+    - node_modules/**
+    - .gitignore
+    - .git/**
+
+functions:
+  helloWorld:
+    handler: http
+    events:
+      - http: path

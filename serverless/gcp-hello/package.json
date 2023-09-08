@@ -1,0 +1,17 @@
+{
+  "name": "gcp-hello",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "package": "sls package",
+    "deploy-dev": "sls deploy --stage dev",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "serverless": "^3.34.0",
+    "serverless-google-cloudfunctions": "^4.6.0"
+  }
+}
