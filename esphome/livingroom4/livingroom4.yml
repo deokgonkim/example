@@ -61,7 +61,7 @@ switch:
     name: TV Channel Up
     turn_on_action:
       - remote_transmitter.transmit_samsung:
-          data: 0xE0E0F00F
+          data: 0xE0E048B7
           nbits: 32
       - remote_transmitter.transmit_lg:
           data: 0x20DF00FF
