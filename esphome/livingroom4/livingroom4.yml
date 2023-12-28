@@ -40,7 +40,7 @@ remote_transmitter:
 
 switch:
   - platform: template
-    name: TV Power Button
+    name: TV Power
     turn_on_action:
       - remote_transmitter.transmit_samsung:
           data: 0xE0E040BF
@@ -49,7 +49,7 @@ switch:
           data: 0x20DF22DD
           nbits: 32
   - platform: template
-    name: TV Mute button
+    name: TV Mute
     turn_on_action:
       - remote_transmitter.transmit_samsung:
           data: 0xE0E0F00F
@@ -103,7 +103,7 @@ switch:
           data: 0x20DFD02F
           nbits: 32
   - platform: template
-    name: TV One Button
+    name: TV One
     turn_on_action:
       - remote_transmitter.transmit_samsung:
           data: 0xE0E020DF
@@ -112,7 +112,7 @@ switch:
           data: 0x20DF8877
           nbits: 32
   - platform: template
-    name: TV Two Button
+    name: TV Two
     turn_on_action:
       - remote_transmitter.transmit_samsung:
           data: 0xE0E0A05F
@@ -121,7 +121,7 @@ switch:
           data: 0x20DF48B7
           nbits: 32
   - platform: template
-    name: TV Three Button
+    name: TV Three
     turn_on_action:
       - remote_transmitter.transmit_samsung:
           data: 0xE0E0609F
@@ -130,7 +130,7 @@ switch:
           data: 0x20DFC837
           nbits: 32
   - platform: template
-    name: TV Four Button
+    name: TV Four
     turn_on_action:
       - remote_transmitter.transmit_samsung:
           data: 0xE0E010EF
@@ -139,7 +139,7 @@ switch:
           data: 0x20DF28D7
           nbits: 32
   - platform: template
-    name: TV Five Button
+    name: TV Five
     turn_on_action:
       - remote_transmitter.transmit_samsung:
           data: 0xE0E0906F
@@ -148,7 +148,7 @@ switch:
           data: 0x20DFA857
           nbits: 32
   - platform: template
-    name: TV Six Button
+    name: TV Six
     turn_on_action:
       - remote_transmitter.transmit_samsung:
           data: 0xE0E050AF
@@ -157,7 +157,7 @@ switch:
           data: 0x20DF6897
           nbits: 32
   - platform: template
-    name: TV Seven Button
+    name: TV Seven
     turn_on_action:
       - remote_transmitter.transmit_samsung:
           data: 0xE0E030CF
@@ -166,7 +166,7 @@ switch:
           data: 0x20DFE817
           nbits: 32
   - platform: template
-    name: TV Eight Button
+    name: TV Eight
     turn_on_action:
       - remote_transmitter.transmit_samsung:
           data: 0xE0E0B04F
@@ -175,7 +175,7 @@ switch:
           data: 0x20DF18E7
           nbits: 32
   - platform: template
-    name: TV Nine Button
+    name: TV Nine
     turn_on_action:
       - remote_transmitter.transmit_samsung:
           data: 0xE0E0708F
@@ -184,7 +184,7 @@ switch:
           data: 0x20DF9867
           nbits: 32
   - platform: template
-    name: TV Zero Button
+    name: TV Zero
     turn_on_action:
       - remote_transmitter.transmit_samsung:
           data: 0xE0E08877
