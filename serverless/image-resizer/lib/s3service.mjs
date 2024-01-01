@@ -91,7 +91,8 @@ const uploadFileToS3 = async (content, s3Bucket, s3Path, contentType) => {
         "Bucket": bucket_name,
         "Key": s3Path,
         "Body": content,
-        "ContentType": contentType
+        "ContentType": contentType,
+        "ACL": "public-read"
     }).promise();
 }
 

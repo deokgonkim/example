@@ -125,7 +125,7 @@ export const defaultResize = async (event) => {
           return;
         }
 
-        const s3Object = await s3service.s3GetObject(bucket, key);
+        const s3Object = await s3service.s3GetObject(bucketName, key);
         if (s3Object == null) {
           throw new Error(`File ${key} not found`);
         }
@@ -145,8 +145,8 @@ export const defaultResize = async (event) => {
           } else {
             uploadKey = `thumbnail/${size}/${key}`;
           }
-          const result = await s3service.uploadFileToS3(resizedFile, bucket, uploadKey);
-          console.log(`Uploaded to s3://${bucket}/${uploadKey}`, result);
+          const result = await s3service.uploadFileToS3(resizedFile, bucketName, uploadKey, "image/jpg");
+          console.log(`Uploaded to s3://${bucketName}/${uploadKey}`, result);
         } else {
           throw new Error('Failed to generate resizedFile');
         }

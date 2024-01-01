@@ -64,6 +64,7 @@ functions:
       - s3:
           bucket: ${self:provider.environment.BUCKET_NAME}
           event: s3:ObjectCreated:*
+          existing: true
 
   test:
     handler: test.test
