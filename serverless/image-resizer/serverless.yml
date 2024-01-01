@@ -39,6 +39,7 @@ provider:
   timeout: 60 # optional, in seconds, default is 6
   environment:
     STAGE: ${self:provider.stage}
+    BUCKET_NAME: ${env:BUCKET_NAME, "image.dgkim.net"}
 
 package:
   exclude:
@@ -56,6 +57,13 @@ functions:
           batchSize: 1
           # batchSize: 10 # SQS Messages will be delivered at most 10 messages.
           # functionResponseType: ReportBatchItemFailures
+
+  defaultResize:
+    handler: handler.defaultResize
+    events:
+      - s3:
+          bucket: ${self:provider.environment.BUCKET_NAME}
+          event: s3:ObjectCreated:*
 
   test:
     handler: test.test

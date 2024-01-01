@@ -71,13 +71,13 @@ export const resize = async (event) => {
       console.log(`s3url: ${s3url}`);
       console.log(`size: ${size}`);
       if (size === undefined) {
-        size = 375;
+        size = DEFAULT_SIZE;
       }
 
       const { bucket, key } = s3service.extractBucketAndKey(s3url);
       console.log('bucket', bucket, 'key', key);
 
-      const s3Object = await s3service.s3GetObject(s3url);
+      const s3Object = await s3service.s3GetObjectUsingS3Url(s3url);
       if (s3Object == null) {
         throw new Error(`File ${s3url} not found`);
       }
@@ -101,6 +101,55 @@ export const resize = async (event) => {
         console.log(`Uploaded to s3://${bucket}/${uploadKey}`, result);
       } else {
         throw new Error('Failed to generate resizedFile');
+      }
+    } catch(e) {
+      console.error(e);
+    }
+  }
+};
+
+export const defaultResize = async (event) => {
+  for (const record of event.Records) {
+    console.log("Message: ", record.s3);
+    try {
+      const s3event = record.s3;
+      const bucketName = s3event?.bucket?.name;
+      const key = s3event?.object?.key;
+      if (bucketName && key) {
+        console.log('bucketName', bucketName);
+        console.log('key', key);
+        const size = DEFAULT_SIZE;
+
+        if (key.startsWith('thumbnail/')) {
+          console.log("Skipping thumbnail");
+          return;
+        }
+
+        const s3Object = await s3service.s3GetObject(bucket, key);
+        if (s3Object == null) {
+          throw new Error(`File ${key} not found`);
+        }
+
+        let resizedFile;
+        const isHeic = key.toUpperCase().endsWith('.HEIC');
+        if (isHeic) {
+          const jpg = await resizer.heicToJpg(s3Object.Body);
+          resizedFile = await resizer.resizeTo(jpg, size);
+        } else {
+          resizedFile = await resizer.resizeTo(s3Object.Body, size);
+        }
+        if (resizedFile) {
+          let uploadKey;
+          if (isHeic) {
+            uploadKey = `thumbnail/${size}/${key.slice(0, -5)}.jpg`;
+          } else {
+            uploadKey = `thumbnail/${size}/${key}`;
+          }
+          const result = await s3service.uploadFileToS3(resizedFile, bucket, uploadKey);
+          console.log(`Uploaded to s3://${bucket}/${uploadKey}`, result);
+        } else {
+          throw new Error('Failed to generate resizedFile');
+        }
       }
     } catch(e) {
       console.error(e);

@@ -37,7 +37,7 @@ const extractBucketAndKey = (s3Url) => {
  * @param {String} s3Url S3 URL
  * @returns
  */
-const s3GetObject = async (s3Url) => {
+const s3GetObjectUsingS3Url = async (s3Url) => {
     if (!s3Url.startsWith('s3://')) {
         throw new Error(`Invalid S3 url ${s3Url}`);
     }
@@ -46,6 +46,14 @@ const s3GetObject = async (s3Url) => {
         throw new Error(`Failed to parse S3 url ${s3Url}`);
     }
     const [ fullUrl, bucket, key ] = matching;
+    const file = await S3.getObject({
+        Bucket: bucket,
+        Key: key
+    }).promise();
+    return file;
+}
+
+const s3GetObject = async (bucket, key) => {
     const file = await S3.getObject({
         Bucket: bucket,
         Key: key
@@ -124,6 +132,7 @@ const moveToTrash = async (s3Url) => {
 
 export default {
     extractBucketAndKey,
+    s3GetObjectUsingS3Url,
     s3GetObject,
     s3GetObjectThumbnail,
     uploadFileToS3,
