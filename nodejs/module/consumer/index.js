@@ -1,4 +1,4 @@
-const { someFunction, SomeEntity, otherFunction } = require("provider");
+const { someFunction, SomeEntity, otherFunction, ClassEntity } = require("provider");
 
 
 const main = async () => {
@@ -12,6 +12,11 @@ const main = async () => {
     console.log('a', a);
 
     console.log('b', otherFunction(a));
+
+    let newClass = new ClassEntity({
+        name: "하하하",
+    });
+    console.log('newClass', newClass);
 }
 
 main().catch((err) => {
