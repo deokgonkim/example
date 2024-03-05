@@ -1,0 +1,29 @@
+FROM public.ecr.aws/lambda/nodejs:16 AS buildtime
+
+WORKDIR /app
+
+COPY package*.json /app/
+RUN npm ci
+
+# ARG SENTRY_AUTH_TOKEN
+# ENV SENTRY_AUTH_TOKEN=$SENTRY_AUTH_TOKEN
+
+ARG VERSION
+ENV VERSION=$VERSION
+
+COPY . /app/
+# RUN ls -l /app/
+RUN npx prisma generate
+RUN npm run build
+
+EXPOSE 3000
+
+CMD ["node", "dist/main"]
+
+FROM public.ecr.aws/lambda/nodejs:16 AS lambdaruntime
+
+WORKDIR ${LAMBDA_TASK_ROOT}
+COPY --from=buildtime /app/dist/ ./dist/
+COPY --from=buildtime /app/node_modules/ ./node_modules/
+
+CMD ["dist/lambda.handler"]

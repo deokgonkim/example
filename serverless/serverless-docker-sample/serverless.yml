@@ -1,0 +1,98 @@
+service: nestjs-lambda-api
+useDotenv: true
+
+frameworkVersion: '3'
+
+# plugins:
+#   - serverless-jetpack
+plugins:
+  - serverless-domain-manager
+  # - serverless-plugin-typescript
+
+provider:
+  name: aws
+  runtime: nodejs16.x
+  region: ${env:AWS_REGION}
+  stage: ${opt:stage, "dev"}
+  deploymentBucket:
+    name: ${env:DEPLOYMENT_BUCKET}
+    maxPreviousDeploymentArtifacts: 5
+    blockPublicAccess: true
+    serverSideEncryption: AES256
+  ecr:
+    images:
+      api:
+        # pull from ecr
+        # uri: # ecr image url
+        # build local dockefile
+        path: ./
+        file: Dockerfile.lambda
+        buildArgs:
+          VERSION: ${env:VERSION, ""}
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action: 's3:*'
+          Resource: 'arn:aws:s3:::*'
+        - Effect: Allow
+          Action: 'apigateway:*'
+          Resource: 'arn:aws:apigateway:${env:AWS_REGION}::/*'
+        - Effect: Allow
+          Action: 'sqs:*'
+          Resource: 'arn:aws:sqs:${env:AWS_REGION}:*:*'
+
+  vpc:
+    securityGroupIds:
+      - ${env:SECURITY_GROUP} # vpc
+    subnetIds:
+      - ${env:SUBNET_1} # private 1
+      - ${env:SUBNET_2} # private 2
+      - ${env:SUBNET_3} # private 3
+  timeout: 30 # default 6s
+  environment:
+    # ENV_VAR1: ${env:ENV_VAR1}
+    VERSION: ${param:VERSION, 'noversion'}
+    STAGE: ${self:provider.stage}
+    # prisma
+    DATABASE_URL: ${env:DATABASE_URL}
+
+custom:
+  customDomain:
+    rest:
+      domainName: ${env:DOMAIN_NAME}
+      stage: ${self:provider.stage}
+      basePath: ""
+      certificateName: ${env:CERTIFICATE_NAME}
+      createRoute53Route: true
+      createRoute53IPv4Record: false
+      endpointType: "regional"
+      securityPolicy: tls_1_2
+
+functions:
+  api:
+    # handler: "./src/lambda.handler"
+    image:
+      name: api 
+    events:
+      - http:
+          method: any
+          path: /{proxy+}
+          # serverless option cannot cover all headers.
+          # instead using nestjs cors
+          # cors:
+          #   origin: '*'
+          #   headers:
+          #     - Content-Type
+          #     - X-Amz-Date
+          #     - Authorization
+          #     - X-Api-Key
+          #     - X-Amz-Security-Token
+          #     - X-Amz-User-Agent
+          #     - X-Amzn-Trace-Id
+          #     - sentry-trace
+          #     - baggage
+          #     - sec-fetch-mode
+          #     - sec-fetch-site
+          #   allowCredentials: true
+    provisionedConcurrency: 3
