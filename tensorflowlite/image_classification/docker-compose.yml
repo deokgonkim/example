@@ -1,0 +1,13 @@
+
+services:
+  python:
+    build:
+      context: .
+    environment:
+      - DISPLAY=:0.0
+    devices:
+      - "/dev/video0:/dev/video0"
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+
+
