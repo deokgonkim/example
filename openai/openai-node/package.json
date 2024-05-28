@@ -6,6 +6,7 @@
   "scripts": {
     "hello": "ts-node -r ./env.js src/hello.ts",
     "asktime": "ts-node -r ./env.js src/asktime.ts",
+    "id": "ts-node -r ./env.js src/intentdetection.ts",
     "teachandask": "ts-node -r ./env.js src/teachandask.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
