@@ -147,11 +147,15 @@ export const main = async () => {
                 // console.log("Items:", items);
                 messages.push({
                     role: 'system',
-                    content: `Available items are ${JSON.stringify(timeslots)}`
+                    content: `Available timeslots are ${JSON.stringify(timeslots)}`
                 });
                 messages.push({
+                    role: 'system',
+                    content: 'If there is no available timeslot for customer asked date, response customer to enquery via KakaoTalk'
+                })
+                messages.push({
                     role: 'user',
-                    content: `Answer the list of timeslots of customer asked date. Do not use JSON response, response as a plain converation. and End the converation`
+                    content: `Answer the available timeslots to customer if there are. Do not use JSON response, response as a plain converation. and End the converation`
                 });
                 break;
             case 'ITEM_PRICE_ENQUERY':
