@@ -1,0 +1,23 @@
+{
+  "name": "openai-node",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "hello": "ts-node -r ./env.js src/hello.ts",
+    "asktime": "ts-node -r ./env.js src/asktime.ts",
+    "teachandask": "ts-node -r ./env.js src/teachandask.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "openai": "^4.47.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.12",
+    "dotenv": "^16.4.5",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.5"
+  }
+}
