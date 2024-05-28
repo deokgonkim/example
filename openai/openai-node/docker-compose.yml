@@ -1,0 +1,11 @@
+#docker run --rm -d -p 7681:7681 raonigabriel/web-terminal:latest
+
+services:
+  web:
+    # image: raonigabriel/web-terminal:latest
+    build:
+      context: .
+    volumes:
+      - ./:/app/
+    ports:
+      - 7681:7681
