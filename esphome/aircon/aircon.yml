@@ -1,0 +1,99 @@
+esphome:
+  name: aircon
+
+esp8266:
+  board: d1_mini
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  password: ""
+
+ota:
+  password: ""
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: !secret wifi_fb_ssid
+    password: !secret wifi_fb_password
+
+captive_portal:
+    
+# Example configuration entry
+remote_receiver:
+  id: rcvr
+  pin:
+    number: 12
+    inverted: True
+    mode:
+      input: true
+      pullup: true
+  dump:
+    - midea
+    - pronto
+
+remote_transmitter:
+  id: trsm
+  # pin: 1
+  pin: 13
+  # Infrared remotes use a 50% carrier signal
+  carrier_duty_percent: 50%
+
+sensor:
+  - platform: dht
+    id: ac_dht
+    pin: 2
+    temperature:
+      name: "Aircon DHT Temperature"
+      id: ac_dht_temp
+    humidity:
+      name: "Aircon DHT Humidity"
+    update_interval: 30s
+
+climate:
+  - platform: thermostat
+    name: 'aircon'
+    min_idle_time: 10s
+    sensor: ac_dht_temp
+    min_cooling_off_time: 10s
+    min_cooling_run_time: 10s
+    idle_action:
+      - switch.turn_off: ac
+    cool_action:
+      - switch.turn_on: ac
+
+switch:
+  - platform: template
+    id: ac
+    name: aircon button
+    optimistic: True
+    turn_on_action:
+      - remote_transmitter.transmit_pronto:
+          # ac on 27
+          data: "0000 006D 004E 0000 014D 00A8 0012 0017 0013 0017 0013 0040 0012 0040 0012 0017 0013 0017 0013 0040 0012 0040 0012 0040 0012 0018 0012 0018 0012 0018 0012 0018 0012 0018 0012 0018 0012 0040 0012 0040 0012 0018 0012 0018 0012 0018 0012 0040 0012 0040 0012 0040 0012 0018 0012 0018 0012 0040 0012 0018 0012 0018 0012 0018 0012 0018 0012 0018 0012 0018 0012 0018 0012 0018 0012 0018 0012 0018 0012 0018 0012 0018 0012 0040 0012 0040 0012 0018 0012 0018 0012 0018 0012 0018 0012 0018 0012 0018 0012 0018 0012 0018 0012 0018 0012 0018 0012 0018 0012 0018 0012 0041 0011 0018 0012 0019 0011 0019 0011 0019 0011 0019 0011 0019 0011 0041 0011 0041 0011 0019 0011 0019 0011 0019 0011 0019 0011 0019 0011 0019 0011 0041 0010 0043 000F 001A 0010 001B 000F 001B 000F 0043 000F 0043 000F 001B 000F 001B 000F 06C3"
+    turn_off_action:
+      - remote_transmitter.transmit_pronto:
+          # off
+          data: "0000 006D 004E 0000 014D 00A8 0012 0017 0013 0017 0013 003F 0013 003F 0013 0017 0013 0017 0013 003F 0013 003F 0013 003F 0013 0017 0013 0017 0013 0017 0013 0017 0013 0017 0013 0017 0013 0040 0012 0040 0012 0018 0012 0018 0012 0018 0012 0040 0012 0040 0012 0040 0012 0018 0012 0018 0012 0040 0012 0018 0012 0018 0012 0018 0012 0018 0012 0018 0012 0018 0012 0018 0012 0018 0012 0018 0012 0018 0012 0018 0012 0018 0012 0040 0012 0040 0012 0018 0012 0018 0012 0018 0012 0018 0012 0018 0012 0018 0012 0018 0012 0018 0012 0018 0012 0018 0012 0018 0012 0018 0012 0018 0012 0018 0012 0018 0012 0040 0012 0018 0012 0018 0012 0018 0012 0040 0012 0040 0012 0018 0012 0018 0012 0018 0012 0018 0012 0018 0012 0018 0012 0040 0012 0018 0012 0018 0012 0018 0012 0041 0011 0041 0011 0041 0011 0018 0012 0018 0012 06C3"
+
+# output:
+#   - platform: esp8266_pwm
+#     # pin: D0
+#     pin: 2
+#     frequency: 1000 Hz
+#     id: pwm_output
+
+# light:
+#   - platform: monochromatic
+#     output: pwm_output
+#     name: "Remocon Light"
+
+# time:
+#   - platform: sntp
+#     id: my_time
