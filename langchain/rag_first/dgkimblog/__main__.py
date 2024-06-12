@@ -54,7 +54,8 @@ splits = text_splitter.split_documents(docs)
 
 vectorstore = Chroma.from_documents(
     documents=splits,
-    embedding=OpenAIEmbeddings()
+    embedding=OpenAIEmbeddings(),
+    # persist_directory='vectorstore'
 )
 
 retriever = vectorstore.as_retriever()
