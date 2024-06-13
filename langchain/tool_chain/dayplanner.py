@@ -4,32 +4,58 @@ load_dotenv(os.path.join('..', '.env'))
 
 import streamlit
 
-from langchain import LLMChain
+from langchain import globals
+globals.set_verbose(True)
+
+# from langchain import LLMChain
+from langchain.chains.llm import LLMChain
 from langchain.agents import Tool, ConversationalAgent, AgentExecutor
-from langchain.chat_models import ChatOpenAI
-from langchain.llms import OpenAI
+# from langchain.chat_models import ChatOpenAI
+# from langchain_community.chat_models import ChatOpenAI
+from langchain_openai import ChatOpenAI
 from langchain.memory import ConversationBufferMemory
-from langchain.memory.chat_message_histories import StreamlitChatMessageHistory
-from langchain.utilities import OpenWeatherMapAPIWrapper
+# from langchain.memory.chat_message_histories import StreamlitChatMessageHistory
+from langchain_community.chat_message_histories import StreamlitChatMessageHistory
+# from langchain.utilities import OpenWeatherMapAPIWrapper
+from langchain_community.utilities import OpenWeatherMapAPIWrapper
 
 streamlit.title('Day Planer')
 
-# AI = OpenAI(temperature=0.7)
-
-weather = OpenWeatherMapAPIWrapper()
+# openweathermap api requires api key
+weather = OpenWeatherMapAPIWrapper(openweathermap_api_key=os.getenv('OPENWEATHERMAP_API_KEY'))
 
 tools = [
     Tool(
         name="Weather",
         func=weather.run,
-        description="Useful for when you need to know the weather in a specific location."
+        description="Useful for when you need to know the weather in a specific location.",
+        verbose=True
     )
 ]
 
 msgs = StreamlitChatMessageHistory()
 
-prefix = """You are a friendly, mdern day planner. You help users find activities in a given city based on their preferences and the weather.
-You have access to tools:"""
+# prefix = """You are a friendly, modern day planner. You help users find activities in a given city based on their preferences and the weather.
+# You have access to tools:
+
+# {tools}
+
+# Use the following format:
+
+# Question: the input question you must answer
+# Thought: you should always think about what to do
+# Action: the action to take, should be one of [{tool_names}]
+# Action Input: the input to the action
+# Obersvation: the result of the action
+# ... (this Thought-Action-Observation cycle can repeat multiple times)
+# Thought: I now know the final answer
+# Final Answer: the final answer to the original input question
+# """
+
+prefix = """You are a friendly, modern day planner. You help users find activities in a given city based on their preferences and the weather.
+You have access to tools:
+"""
+
 suffix = """Begin!
 
 Chat History:
