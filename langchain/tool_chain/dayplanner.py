@@ -14,7 +14,7 @@ from langchain.utilities import OpenWeatherMapAPIWrapper
 
 streamlit.title('Day Planer')
 
-AI = OpenAI(temperature=0.7)
+# AI = OpenAI(temperature=0.7)
 
 weather = OpenWeatherMapAPIWrapper()
 
