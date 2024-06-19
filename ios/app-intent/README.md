@@ -7,3 +7,6 @@ AppIntent can be useful when used with `Shortcuts`
 The response received from api server is responded back to the iOS.
 The return value can be used to show alert or to speak
 
+## Demo screen shot
+
+![Demo](./shortcuts_demo.png)
