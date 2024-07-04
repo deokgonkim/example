@@ -7,6 +7,8 @@ load_dotenv(os.path.join(os.getcwd(), '.env'))
 
 from functools import reduce
 
+from telethon import utils
+
 from telethon.sync import TelegramClient
 from telethon.tl.functions.messages import GetDialogsRequest
 from telethon.tl.functions.channels import GetParticipantsRequest
@@ -41,39 +43,24 @@ async def getChatRoomMembers(chat_id):
 
     # Print details of each member
     for user in all_participants:
-        print(f"User ID: {user.id}, Username: {user.username}, First Name: {user.first_name}, Last Name: {user.last_name}")
+        print(f"\t\tUser ID: {user.id}, Username: {user.username}, First Name: {user.first_name}, Last Name: {user.last_name}")
 
 async def main():
     # Connect to the client
-    print(f'phone_number: {phone_number}')
+    # print(f'phone_number: {phone_number}')
     await client.start(phone_number)
 
     # Fetch all chat rooms (dialogs)
-    all_chats = list()
-    offset_id = 0
-    offset_date = None
-    while True:
-        result = await client(GetDialogsRequest(
-            offset_date=offset_date,
-            offset_id=offset_id,
-            offset_peer=InputPeerEmpty(),
-            limit=100,
-            hash=0
-        ))
-        if not result.chats:
-            break
-        all_chats.extend(result.chats)
-        offset_id = result.chats[-1].id
-        
-        offset_date = (reduce(lambda a, b: a if hasattr(a, 'date') else (b if hasattr(b, 'date') else None), result.chats[::-1])).date
-        # if hasattr(result.chats[-1], 'date'):
-        #     offset_date = result.chats[-1].date
+    all_chats = await client.get_dialogs()
 
     # Print the title of each chat room
     for chat in all_chats:
+        entity_id, entity_type = utils.resolve_id(chat.id)
         print(f"Chat ID: {chat.id}, Title: {chat.title if hasattr(chat, 'title') else 'Private Chat'}")
-        try: 
-            await getChatRoomMembers(chat.id)
+        print(f'\t{entity_id}, {entity_type}')
+        try:
+            if entity_type.__name__ == 'PeerChannel':
+                await getChatRoomMembers(chat.id)
         except Exception as e:
             print(f"Error: {e}")
 
