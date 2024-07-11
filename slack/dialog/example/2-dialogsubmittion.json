@@ -1,0 +1,26 @@
+{
+    "type": "dialog_submission",
+    "token": "REDACTED",
+    "action_ts": "1720662154.098293",
+    "team": {
+        "id": "REDACTED",
+        "domain": "dgkimnet"
+    },
+    "user": {
+        "id": "REDACTED",
+        "name": "dgkim"
+    },
+    "channel": {
+        "id": "REDACTED",
+        "name": "directmessage"
+    },
+    "is_enterprise_install": false,
+    "enterprise": null,
+    "submission": {
+        "title": "test",
+        "description": "test"
+    },
+    "callback_id": "submit-ticket",
+    "response_url": "https://hooks.slack.com/app/REDACTED/REDACTED/REDACTED",
+    "state": ""
+}

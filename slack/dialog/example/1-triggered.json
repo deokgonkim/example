@@ -1,0 +1,18 @@
+{
+    "type": "shortcut",
+    "token": "REDACTED",
+    "action_ts": "1720662146.336156",
+    "team": {
+        "id": "REDACTED",
+        "domain": "dgkimnet"
+    },
+    "user": {
+        "id": "REDACTED",
+        "username": "dgkim",
+        "team_id": "REDACTED"
+    },
+    "is_enterprise_install": false,
+    "enterprise": null,
+    "callback_id": "show_me_dialog",
+    "trigger_id": "7428616411328.4232110099.90405c2fde678f72a8fec3b360e66f0a"
+}
