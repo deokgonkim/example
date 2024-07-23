@@ -44,10 +44,20 @@ rc522_spi:
           json:
             tag: !lambda
               return x;
+      - rtttl.play:
+          # rtttl: 'siren:d=8,o=5,b=100:d,e,d,e,d,e,d,e'
+          rtttl: 'two_short:d=4,o=5,b=100:16e6,16e6'
 
 http_request:
 
+output:
+  - platform: esp8266_pwm
+    pin: 5
+    id: my_buzzer
 
+rtttl:
+  output: my_buzzer
+  gain: 0.1
 
 # time:
 #   - platform: sntp
