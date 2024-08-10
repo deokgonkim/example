@@ -37,7 +37,26 @@ pn532_spi:
   # cs_pin: 15 # D1 mini won't boot
   # https://community.home-assistant.io/t/d1-mini-wont-connect-to-wifi-after-adding-pn532-nfc-tag-reader/538612/2
   cs_pin: 5
+  on_tag:
+    then:
+      - rtttl.play:
+          # rtttl: 'siren:d=8,o=5,b=100:d,e,d,e,d,e,d,e'
+          rtttl: 'two_short:d=4,o=5,b=100:16e6,16e6'
+      - homeassistant.tag_scanned: !lambda 'return x;'
 
+output:
+  - platform: esp8266_pwm
+    pin: 4
+    id: my_buzzer
+
+rtttl:
+  output: my_buzzer
+  gain: 0.1
+
+binary_sensor:
+  - platform: pn532
+    uid: !secret my_room_card
+    name: "My Room Card pn532"
 
 # time:
 #   - platform: sntp
