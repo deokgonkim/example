@@ -4,7 +4,11 @@
 GIT_VERSION=$(git describe --tags --always || git rev-parse HEAD --short)
 
 # Get the current branch name
-BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
+if [ -z "$GITHUB_REF" ]; then
+    BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
+else
+    BRANCH_NAME=${GITHUB_REF#refs/heads/}
+fi
 
 # Sanitize the branch name by replacing slashes with dashes (if necessary)
 BRANCH_NAME_SANITIZED=$(echo "$BRANCH_NAME" | tr '/' '-')
