@@ -1,0 +1,4 @@
+(fp_lib_table
+  (lib (name "first")(type "KiCad")(uri "/home/eric/git-deokgonkim/example/kicad/first.pretty")(options "")(descr ""))
+  (lib (name "Library")(type "KiCad")(uri "${KIPRJMOD}/Library.pretty")(options "")(descr ""))
+)
