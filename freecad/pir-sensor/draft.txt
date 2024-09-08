@@ -1,0 +1,22 @@
+PIR sensor
+width 34mm
+height 25.5mm
+diameter 23.6mm
+구멍 왼쪽에서 17mm => 벽에서 19mm
+구멍 위쪽에서 12.75mm => 벽에서 14.25
+안깊이 3.4mm
+
+벽 높이 5.6mm
+
+기둥 거리 distance 29mm
+
+위 기둥 높이 4mm
+
+아래
+기둥높이 12mm
+기둥 밑에서 12mm
+기둥 위높이 4mm
+
+전체 width 38mm
+전체 height 29.5
+
