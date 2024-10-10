@@ -7,7 +7,8 @@
 - should download notosanskr-regular.ttf into fonts
 - run
   ```
-  node src/index.js
+  npm run start simple ./output/simple.pdf
+  npm run start rectangle ./output/rect.pdf
   ```
 
 ## References
