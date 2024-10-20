@@ -11,8 +11,8 @@ logger:
 api:
   password: ""
 
-ota:
-  password: ""
+# ota:
+#   password: ""
 
 wifi:
   ssid: !secret wifi_ssid
@@ -38,7 +38,6 @@ rc522_spi:
       - http_request.send:
           method: POST
           url: !secret nfc_tag_call_url
-          verify_ssl: false
           headers:
             Content-Type: application/json
           json:
@@ -49,6 +48,7 @@ rc522_spi:
           rtttl: 'two_short:d=4,o=5,b=100:16e6,16e6'
 
 http_request:
+  verify_ssl: false
 
 output:
   - platform: esp8266_pwm
