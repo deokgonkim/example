@@ -11,3 +11,7 @@
 ```
 https://api.telegram.org/bot<YOUR_BOT_TOKEN>/setWebhook?url=<YOUR_API_GATEWAY_ENDPOINT>
 ```
+
+## API Management URL
+
+- https://my.telegram.org/
