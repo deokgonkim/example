@@ -1,0 +1,99 @@
+service: serverless-telegram-bot
+frameworkVersion: '3'
+useDotenv: true
+
+custom:
+  tableNameUser: 'users-table-${sls:stage}'
+  tableNameOrder: 'orders-table-${sls:stage}'
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: ${env:AWS_REGION, "ap-northeast-2"}
+  stage: ${opt:stage, "dev"}
+  deploymentBucket:
+    # Name of an existing bucket to use (default: created by serverless)
+    name: ${env:SERVERLESS_DEPLOYMENT_BUCKET}
+    # On deployment, serverless prunes artifacts older than this limit (default: 5)
+    maxPreviousDeploymentArtifacts: 5
+    # Prevents public access via ACLs or bucket policies (default: false)
+    # Note: the deployment bucket is not public by default. These are additional ACLs.
+    blockPublicAccess: true
+    # Skip the creation of a default bucket policy when the deployment bucket is created (default: false)
+    # skipPolicySetup: true
+    # Enable bucket versioning (default: false)
+    # versioning: true
+    # Server-side encryption method
+    serverSideEncryption: AES256
+    # For server-side encryption
+    # sseKMSKeyId: arn:aws:kms:us-east-1:xxxxxxxxxxxx:key/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa
+    # For server-side encryption with custom keys
+    # sseCustomerAlgorithim: AES256
+    # sseCustomerKey: string
+    # sseCustomerKeyMD5: md5sum
+  tracing:
+    lambda: true
+    apiGateway: true
+  iam:
+    role:
+      statements:
+        - Effect: 'Allow'
+          Resource: '*'
+          Action: 's3:*'
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+          Resource:
+            - Fn::GetAtt: [ UsersTable, Arn ]
+            - Fn::GetAtt: [ OrdersTable, Arn ]
+  timeout: 25 # optional, in seconds, default is 6, API Gateway timeout is 30 seconds
+  environment:
+    STAGE: ${self:provider.stage}
+    USERS_TABLE: ${self:custom.tableNameUser}
+    ORDERS_TABLE: ${self:custom.tableNameOrder}
+
+functions:
+  api:
+    handler: index.handler
+    events:
+      - httpApi: '*'
+
+  onOrderChange:
+    handler: src/handlers/order.onOrderChange
+    events:
+      - stream:
+          type: dynamodb
+          arn:
+            Fn::GetAtt: [ OrdersTable, StreamArn ]
+
+resources:
+  Resources:
+    UsersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: userId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: userId
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:custom.tableNameUser}
+    OrdersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: orderId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: orderId
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:custom.tableNameOrder}
+        StreamSpecification:
+          StreamViewType: NEW_AND_OLD_IMAGES

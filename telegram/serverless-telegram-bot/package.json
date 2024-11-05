@@ -1,0 +1,27 @@
+{
+  "name": "serverless-telegram-bot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "package": "sls package",
+    "dev:deploy": "sls deploy --stage dev",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@eslint/create-config": "^1.4.0",
+    "@eslint/js": "^9.14.0",
+    "dotenv": "^16.4.5",
+    "eslint": "^9.14.0",
+    "globals": "^15.12.0",
+    "serverless": "^3.39.0"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.682.0",
+    "express": "^4.21.1",
+    "node-telegram-bot-api": "^0.66.0",
+    "serverless-http": "^3.2.0"
+  }
+}
