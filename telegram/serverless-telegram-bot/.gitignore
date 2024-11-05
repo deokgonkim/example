@@ -148,4 +148,5 @@ dist
 .serverless
 
 # End of https://www.toptal.com/developers/gitignore/api/node,serverless,dotenv
+env.sh
 
