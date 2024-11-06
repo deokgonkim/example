@@ -5,6 +5,8 @@ useDotenv: true
 custom:
   tableNameUser: 'users-table-${sls:stage}'
   tableNameOrder: 'orders-table-${sls:stage}'
+  tableNameTelegramWebhooks: 'telegram-webhooks-table-${sls:stage}'
+  tableNameTelegramUser: 'telegram-users-table-${sls:stage}'
 
 provider:
   name: aws
@@ -49,13 +51,19 @@ provider:
             - dynamodb:UpdateItem
             - dynamodb:DeleteItem
           Resource:
-            - Fn::GetAtt: [ UsersTable, Arn ]
-            - Fn::GetAtt: [ OrdersTable, Arn ]
+            # - Fn::GetAtt: [ UsersTable, Arn ]
+            # - Fn::GetAtt: [ OrdersTable, Arn ]
+            # allow all tables in my account
+            - 'arn:aws:dynamodb:${self:provider.region}:*:table/*'
   timeout: 25 # optional, in seconds, default is 6, API Gateway timeout is 30 seconds
   environment:
     STAGE: ${self:provider.stage}
     USERS_TABLE: ${self:custom.tableNameUser}
     ORDERS_TABLE: ${self:custom.tableNameOrder}
+    TELEGRAM_WEBHOOKS_TABLE: ${self:custom.tableNameTelegramWebhooks}
+    TELEGRAM_USERS_TABLE: ${self:custom.tableNameTelegramUser}
+
+    TELEGRAM_BOT_TOKEN: ${env:TELEGRAM_BOT_TOKEN}
 
 functions:
   api:
@@ -97,3 +105,25 @@ resources:
         TableName: ${self:custom.tableNameOrder}
         StreamSpecification:
           StreamViewType: NEW_AND_OLD_IMAGES
+    TelegramWebhooksTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: updateId
+            AttributeType: N
+        KeySchema:
+          - AttributeName: updateId
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:custom.tableNameTelegramWebhooks}
+    TelegramUsersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: telegramUserId
+            AttributeType: N
+        KeySchema:
+          - AttributeName: telegramUserId
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:custom.tableNameTelegramUser}

@@ -7,14 +7,19 @@ const {
 const express = require("express");
 const serverless = require("serverless-http");
 
+// const userRoutes = require("./routes/userRoutes");
+const telegramRoutes = require('./telegram/route');
 
-const app = express();
-
-const USERS_TABLE = process.env.USERS_TABLE;
+const USERS_TABLE = process.env.USERS_TABLE || "users-table-dev";
 const client = new DynamoDBClient();
 const dynamoDbClient = DynamoDBDocumentClient.from(client);
 
+const app = express();
+
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+app.use('/telegram', telegramRoutes); // Use the routes
 
 app.get("/users/:userId", async function (req, res) {
   const params = {
@@ -72,4 +77,16 @@ app.use((req, res, next) => {
 });
 
 
-module.exports.handler = serverless(app);
+// module.exports.handler = serverless(app);
+module.exports = {
+  handler: serverless(app),
+  app,
+}
+
+// Start the server locally if not in a serverless environment
+if (process.env.NODE_ENV !== 'production') {
+  const port = process.env.PORT || 3000;
+  app.listen(port, () => {
+    console.log(`Server is running on http://localhost:${port}`);
+  });
+}
