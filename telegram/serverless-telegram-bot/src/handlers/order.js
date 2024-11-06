@@ -15,6 +15,11 @@ const onOrderChange = async (event, context) => {
      * @type {DynamoDBStreamRecord}
      */
     const streamEvent = record;
+    const eventName = streamEvent.eventName;
+    if (eventName !== 'MODIFY') {
+      console.log('Skipping record', eventName);
+      continue;
+    }
     console.log('Processing record', JSON.stringify(record, null, 4));
     const newOrderId = streamEvent.dynamodb.NewImage.orderId.S;
     console.log('Processing order', newOrderId);

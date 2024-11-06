@@ -7,7 +7,7 @@
     "package": "sls package",
     "start": "node -r dotenv/config src/index.js",
     "dev": "nodemon -r dotenv/config src/index.js",
-    "dev:deploy": "sls deploy --stage dev",
+    "deploy-dev": "sls deploy --stage dev",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
