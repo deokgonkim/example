@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { signIn, signUp } from "./authService";
+import { config, signIn, signUp } from "./authService";
 
 const LoginPage = () => {
   const [username, setUsername] = useState("");
@@ -13,6 +13,17 @@ const LoginPage = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
   const navigate = useNavigate();
+
+  const goHostedUI = async () => {
+    const url = config.hostedUiUrl + '/login';
+    const params = new URLSearchParams({
+      response_type: 'code',
+      client_id: config.clientId,
+      redirect_uri: document.location.origin + '/return',
+      scope: 'openid email phone',
+    });
+    document.location.href = url + '?' + params.toString();
+  }
 
   const handleSignIn = async (e: { preventDefault: () => void }) => {
     e.preventDefault();
@@ -129,6 +140,7 @@ const LoginPage = () => {
           </div>
         )}
         <button type="submit">{isSignUp ? "Sign Up" : "Sign In"}</button>
+        <button type="submit" onClick={() => goHostedUI()}>Google Login</button>
       </form>
       <button type="button" onClick={() => setIsSignUp(!isSignUp)}>
         {isSignUp

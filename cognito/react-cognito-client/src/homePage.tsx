@@ -43,6 +43,7 @@ const HomePage = () => {
   return (
     <div>
       <h1>Hello World</h1>
+      <h2>Welcome { idToken["cognito:username"] }</h2>
       <p>See console log for Amazon Cognito user tokens.</p>
       <button type="button" onClick={handleLogout}>
         Logout

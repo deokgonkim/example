@@ -7,20 +7,58 @@ import {
     SignUpCommand,
     ConfirmSignUpCommand,
     AuthFlowType,
+    OAuthFlowType,
 } from "@aws-sdk/client-cognito-identity-provider";
 //   import config from "./config.json";
 
-const config: {
+export const config: {
     region: string;
     clientId: string;
+    hostedUiUrl: string;
 } = {
     region: import.meta.env.VITE_AWS_REGION || 'ap-northeast-2',
     clientId: import.meta.env.VITE_COGNITO_CLIENT_ID || 'your_cognito_client_id',
+    hostedUiUrl: import.meta.env.VITE_COGNITO_HOSTED_UI_URL || 'your_cognito_hosted_ui_url',
 };
 
 export const cognitoClient = new CognitoIdentityProviderClient({
     region: config.region,
 });
+
+/**
+ * Authenticate with the `code` received from the OAuth flow
+ * @param code
+ */
+export const oauth2Token = async (code: string) => {
+    const url = config.hostedUiUrl + '/oauth2/token';
+    const params = new URLSearchParams({
+        grant_type: 'authorization_code',
+        client_id: config.clientId,
+        code,
+        redirect_uri: document.location.origin + '/return',
+    });
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: params.toString(),
+    });
+    const body = await response.json();
+    // console.log("OAuth2 token response: ", body);
+    if (body) {
+        sessionStorage.setItem("idToken", body.id_token || "");
+        sessionStorage.setItem(
+            "accessToken",
+            body.access_token || "",
+        );
+        sessionStorage.setItem(
+            "refreshToken",
+            body.refresh_token || "",
+        );
+    }
+    return body;
+}
 
 export const signIn = async (username: string, password: string) => {
     const params = {

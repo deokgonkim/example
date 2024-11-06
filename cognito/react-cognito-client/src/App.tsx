@@ -5,6 +5,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import LoginPage from './loginPage';
 import HomePage from './homePage';
 import ConfirmUserPage from './confirmUserPage';
+import ReturnPage from "./return";
 import './App.css';
 
 const App = () => {
@@ -34,6 +35,7 @@ const App = () => {
             isAuthenticated() ? <HomePage /> : <Navigate replace to="/login" />
           }
         />
+        <Route path="/return" element={<ReturnPage />} />
       </Routes>
     </BrowserRouter>
   );
