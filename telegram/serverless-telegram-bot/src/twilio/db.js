@@ -7,26 +7,27 @@ const {
   UpdateCommand,
 } = require('@aws-sdk/lib-dynamodb');
 
-const TELEGRAM_WEBHOOKS_TABLE =
-  process.env.TELEGRAM_WEBHOOKS_TABLE || 'telegram-webhooks-table-dev';
-const TELEGRAM_USERS_TABLE =
-  process.env.TELEGRAM_USERS_TABLE || 'telegram-users-table-dev';
+const WHATSAPP_WEBHOOKS_TABLE =
+  process.env.WHATSAPP_WEBHOOKS_TABLE || 'whatsapp-webhooks-table-dev';
+const WHATSAPP_USERS_TABLE =
+  process.env.WHATSAPP_USERS_TABLE || 'whatsapp-users-table-dev';
 
 const client = new DynamoDBClient();
 const dynamoDbClient = DynamoDBDocumentClient.from(client);
 
 /**
- * Record received Telegram webhook udpate
- * @param {TelegramUpdate} update
+ * Record received whatsapp message
+ * @param {WhatsAppMessage} message
  */
-module.exports.recordTelegramWebHook = async (update) => {
+module.exports.recordWhatsapp = async (message) => {
   const params = {
-    TableName: TELEGRAM_WEBHOOKS_TABLE,
+    TableName: WHATSAPP_WEBHOOKS_TABLE,
     Item: {
-      updateId: update?.update_id,
-      fromId: update?.message?.from?.id,
-      fromUsername: update?.message?.from?.username,
-      message: update?.message,
+      MessageSid: message?.MessageSid,
+      From: message?.From,
+      To: message?.To,
+      Body: message?.Body,
+      message: message,
     },
   };
 
@@ -38,16 +39,40 @@ module.exports.recordTelegramWebHook = async (update) => {
   }
 };
 
+module.exports.findWhatsAppMessageOriginatingFrom = async (fromUser) => {
+  const params = {
+    TableName: WHATSAPP_WEBHOOKS_TABLE,
+    FilterExpression: '#from = :fromUser',
+    ExpressionAttributeNames: {
+      '#from': 'From',
+    },
+    ExpressionAttributeValues: {
+      ':fromUser': fromUser,
+    },
+  };
+
+  try {
+    const { Items, Count } = await dynamoDbClient.send(new ScanCommand(params));
+    return {
+      Items,
+      Count,
+    };
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+};
+
 /**
  *
- * @param {Number} userId
+ * @param {string} whatsappUserId
  * @returns
  */
-module.exports.getTelegramUserById = async (userId) => {
+module.exports.getWhatsAppUserById = async (whatsappUserId) => {
   const params = {
-    TableName: TELEGRAM_USERS_TABLE,
+    TableName: WHATSAPP_USERS_TABLE,
     Key: {
-      telegramUserId: Number(userId),
+      whatsappUserId: whatsappUserId,
     },
   };
 
@@ -62,21 +87,21 @@ module.exports.getTelegramUserById = async (userId) => {
 
 /**
  *
- * @param {TelegramUser} user
+ * @param {WhatsAppUser} user
  * @param {string} userId
  * @param {string} orderId
  */
-module.exports.recordTelegramUser = async (user, userId, orderId) => {
+module.exports.recordWhatsAppUser = async (user, userId, orderId) => {
   try {
-    const existingUser = await module.exports.getTelegramUserById(
-      user?.id
+    const existingUser = await module.exports.getWhatsAppUserById(
+      user?.whatsappUserId
     );
     if (existingUser) {
       // update dynamodb record with userId and orderId
       const params = {
-        TableName: TELEGRAM_WEBHOOKS_TABLE,
+        TableName: WHATSAPP_USERS_TABLE,
         Key: {
-          telegramUserId: existingUser.telegramUserId,
+          whatsappUserId: existingUser.whatsappUserId,
         },
         UpdateExpression:
           'SET userIds = list_append(userIds, :userId), orderIds = list_append(orderIds, :orderId)',
@@ -88,14 +113,10 @@ module.exports.recordTelegramUser = async (user, userId, orderId) => {
       await dynamoDbClient.send(new UpdateCommand(params));
     } else {
       const params = {
-        TableName: TELEGRAM_USERS_TABLE,
+        TableName: WHATSAPP_USERS_TABLE,
         Item: {
-          telegramUserId: user?.id,
-          isBot: user?.is_bot,
-          firstName: user?.first_name,
-          lastName: user?.last_name,
-          username: user?.username,
-          languageCode: user?.language_code,
+          whatsappUserId: user?.whatsappUserId,
+          ProfileName: user?.ProfileName,
           userIds: userId ? [userId] : [],
           orderIds: orderId ? [orderId] : [],
         },
@@ -108,9 +129,9 @@ module.exports.recordTelegramUser = async (user, userId, orderId) => {
   }
 };
 
-module.exports.getTelegramUsersUsingUserId = async (userId) => {
+module.exports.getWhatsAppUsersUsingUserId = async (userId) => {
   const params = {
-    TableName: TELEGRAM_USERS_TABLE,
+    TableName: WHATSAPP_USERS_TABLE,
     FilterExpression: 'contains(userIds, :userId)',
     ExpressionAttributeValues: {
       ':userId': userId,
@@ -130,13 +151,13 @@ module.exports.getTelegramUsersUsingUserId = async (userId) => {
 };
 
 /**
- * 
- * @param {string} orderId 
- * @returns 
+ *
+ * @param {string} orderId
+ * @returns
  */
-module.exports.getTelegramUsersUsingOrderId = async (orderId) => {
+module.exports.getWhatsAppUsersUsingOrderId = async (orderId) => {
   const params = {
-    TableName: TELEGRAM_USERS_TABLE,
+    TableName: WHATSAPP_USERS_TABLE,
     FilterExpression: 'contains(orderIds, :orderId)',
     ExpressionAttributeValues: {
       ':orderId': orderId,

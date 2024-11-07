@@ -7,9 +7,6 @@ const {
 const express = require("express");
 const serverless = require("serverless-http");
 
-// const userRoutes = require("./routes/userRoutes");
-const telegramRoutes = require('./telegram/route');
-
 const USERS_TABLE = process.env.USERS_TABLE || "users-table-dev";
 const client = new DynamoDBClient();
 const dynamoDbClient = DynamoDBDocumentClient.from(client);
@@ -19,7 +16,8 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use('/telegram', telegramRoutes); // Use the routes
+app.use('/telegram', require('./telegram/route')); // Use the routes
+app.use('/twilio', require('./twilio/route')); // Use the routes
 
 app.get("/users/:userId", async function (req, res) {
   const params = {
