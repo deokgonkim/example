@@ -1,0 +1,95 @@
+service: websocket-test
+frameworkVersion: "3"
+useDotenv: true
+
+# package to include service-account.json
+package:
+  include:
+    - service-account.json
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: ${env:AWS_REGION}
+  stage: ${opt:stage, "dev"}
+  # The S3 prefix under which deployed artifacts are stored (default: serverless)
+  # deploymentPrefix: serverless
+  # Configure the S3 bucket used by Serverless Framework to deploy code packages to Lambda
+  deploymentBucket:
+    # Name of an existing bucket to use (default: created by serverless)
+    name: ${env:DEPLOYMENT_BUCKET}
+    # On deployment, serverless prunes artifacts older than this limit (default: 5)
+    maxPreviousDeploymentArtifacts: 5
+    # Prevents public access via ACLs or bucket policies (default: false)
+    # Note: the deployment bucket is not public by default. These are additional ACLs.
+    blockPublicAccess: true
+    # Skip the creation of a default bucket policy when the deployment bucket is created (default: false)
+    # skipPolicySetup: true
+    # Enable bucket versioning (default: false)
+    # versioning: true
+    # Server-side encryption method
+    serverSideEncryption: AES256
+    # For server-side encryption
+    # sseKMSKeyId: arn:aws:kms:us-east-1:xxxxxxxxxxxx:key/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa
+    # For server-side encryption with custom keys
+    # sseCustomerAlgorithim: AES256
+    # sseCustomerKey: string
+    # sseCustomerKeyMD5: md5sum
+  tracing:
+    lambda: true
+    apiGateway: true
+  iam:
+    role:
+      statements:
+        # Allow functions to list all buckets
+        - Effect: Allow
+          Action: "apigateway:*"
+          Resource: "arn:aws:apigateway:ap-northeast-2::/*"
+  timeout: 25 # optional, in seconds, default is 6, API Gateway timeout is 30 seconds
+
+  environment:
+    WEBSOCKET_ENDPOINT: ${env:WEBSOCKET_ENDPOINT}
+
+plugins:
+  - serverless-plugin-typescript
+
+functions:
+
+  # auth:
+  #   handler: src/handlers/auth.handler
+
+  connectHandler:
+    handler: src/handlers/connect.handler
+    events:
+      - websocket:
+          route: $connect
+          # Browser `WebSocket` client doesn't support HTTP Header. so we are not using authorize
+          # implement the authorization in the application logic
+          # authorizer:
+          #   name: auth # references the auth function below
+          #   identitySource:
+          #     - 'route.request.header.Authorization'
+          #     - 'route.request.querystring.token'
+
+
+  disconnectHandler:
+    handler: src/handlers/disconnect.handler
+    events:
+      - websocket:
+          route: $disconnect
+
+  # all the message is delivered to default handler
+  # but if the `body.action` is `foo`, then it will be delivered to customFooHandler
+  defaultHandler:
+    handler: src/handlers/default.handler
+    events:
+      - websocket:
+          route: $default
+
+  # route selection expression is
+  # $request.body.action
+  customFooHandler:
+    handler: src/handlers/foo.handler
+    events:
+      - websocket:
+          route: foo

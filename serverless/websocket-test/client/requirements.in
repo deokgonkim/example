@@ -1,0 +1,5 @@
+# for client.py
+websocket-client
+# for gui
+websockets
+python-dotenv

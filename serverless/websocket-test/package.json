@@ -1,0 +1,31 @@
+{
+  "name": "websocket-test",
+  "version": "1.0.0",
+  "description": "Serverless aws-nodejs-typescript template",
+  "scripts": {
+    "test": "jest",
+    "package": "serverless package",
+    "deploy-dev": "serverless deploy --stage dev"
+  },
+  "engines": {
+    "node": ">=14.15.0"
+  },
+  "devDependencies": {
+    "@serverless/typescript": "^3.0.0",
+    "@types/aws-lambda": "^8.10.71",
+    "@types/jest": "^29.5.14",
+    "@types/node": "^14.14.25",
+    "esbuild": "^0.14.11",
+    "jest": "^29.7.0",
+    "serverless": "^3.0.0",
+    "serverless-plugin-typescript": "^2.1.5",
+    "ts-jest": "^29.2.5",
+    "ts-node": "^10.4.0",
+    "typescript": "^4.1.3"
+  },
+  "author": "The serverless webpack authors (https://github.com/elastic-coders/serverless-webpack)",
+  "license": "MIT",
+  "dependencies": {
+    "@aws-sdk/client-apigatewaymanagementapi": "^3.691.0"
+  }
+}
