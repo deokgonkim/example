@@ -9,6 +9,11 @@ The code is from A8266-GDEM0097Z61 example from goodisplay
 
 #define BTN_TRIGGER D3
 
+#define FUNCTION_COUNT 5
+
+void (*functions[FUNCTION_COUNT])();
+int i = 0;
+
 void setup() {
   // put your setup code here, to run once:
 
@@ -22,26 +27,78 @@ void setup() {
   SPI.beginTransaction(SPISettings(10000000, MSBFIRST, SPI_MODE0));
   SPI.begin();
   Serial.begin(115200);
+  Serial.println("Setup complete");
+
+  functions[0] = fullScreenRefresh;
+  functions[1] = partialRefresh;
+  functions[2] = partialRefresh2;
+  functions[3] = rotated;
+  functions[4] = clear;
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
-  unsigned char i;
   Serial.println("Loop");
   if (digitalRead(BTN_TRIGGER) == LOW) {
     Serial.println("Button is pressed");
-    fullScreenRefresh();
+    Serial.printf("Function %d calling\n", i % FUNCTION_COUNT);
+    functions[i % FUNCTION_COUNT]();
+    i += 1;
   }
   delay(1000);
 }
 
 void fullScreenRefresh() {
-  Serial.println("Before fullScreenRefresh");
-  // EPD_HW_Init(); //Electronic paper initialization.			
-  // Serial.println("EPD_HW_Init");
-  // EPD_WhiteScreen_ALL(gImage_BW1,gImage_RW1); //To Display one image using full screen refresh.
-  // Serial.println("EPD_WhiteScreen_ALL");
-  // EPD_DeepSleep(); //Enter the sleep mode and please do not delete it, otherwise it will reduce the lifespan of the screen.
-  // Serial.println("EPD_DeepSleep");
-  // Serial.println("Done");
+  Serial.println("Full Screen Refresh");
+  EPD_HW_Init(); //Electronic paper initialization.			
+  Serial.println("EPD_HW_Init");
+  EPD_WhiteScreen_ALL(gImage_BW1,gImage_RW1); //To Display one image using full screen refresh.
+  Serial.println("EPD_WhiteScreen_ALL");
+  EPD_DeepSleep(); //Enter the sleep mode and please do not delete it, otherwise it will reduce the lifespan of the screen.
+  Serial.println("EPD_DeepSleep");
+  Serial.println("Done");
+}
+
+void partialRefresh() {
+  Serial.println("Partial Refresh");
+  EPD_HW_Init(); //Electronic paper initialization.	
+  EPD_SetRAMValue_BaseMap(gImage_BW2,gImage_RW2); //Please do not delete the background color function, otherwise it will cause unstable display during partial refresh.
+  for(i=0;i<6;i++)
+    EPD_Dis_Part_Time(24,48+32*0,Num1[i],         //x-A,y-A,DATA-A
+                      24,48+32*1,Num1[0],         //x-B,y-B,DATA-B
+                      24,48+32*2,gImage_numdot1, //x-C,y-C,DATA-C
+                      24,48+32*3,Num1[0],        //x-D,y-D,DATA-D
+                      24,48+32*4,Num1[1],32,64); //x-E,y-E,DATA-E,Resolution 32*64
+  EPD_DeepSleep();  //Enter the sleep mode and please do not delete it, otherwise it will reduce the lifespan of the screen.
+  Serial.println("Done");
+}
+
+void partialRefresh2() {
+  Serial.println("Partial Refresh 2");
+  EPD_HW_Init(); //E-paper initialization	
+  EPD_SetRAMValue_BaseMap(gImage_BW2,gImage_RW2); //Please do not delete the background color function, otherwise it will cause unstable display during partial refresh.			
+  EPD_Dis_PartAll(gImage_p1); //Image 1
+  EPD_Dis_PartAll(gImage_p2); //Image 2
+  EPD_Dis_PartAll(gImage_p3); //Image 3
+  EPD_Dis_PartAll(gImage_p4); //Image 4
+  EPD_Dis_PartAll(gImage_p5); //Image 5	
+  EPD_DeepSleep();//Enter the sleep mode and please do not delete it, otherwise it will reduce the lifespan of the screen.
+  Serial.println("Done");
+}
+
+void rotated() {
+  Serial.println("Rotated");
+  EPD_HW_Init_180(); //Full screen refresh initialization.
+  EPD_SetRAMValue_BaseMap(gImage_BW1,gImage_RW1); //Please do not delete the background color function, otherwise it will cause unstable display during partial refresh.
+  EPD_DeepSleep(); //Enter the sleep mode and please do not delete it, otherwise it will reduce the lifespan of the screen.
+  Serial.println("Done");
+}
+
+void clear() {
+  Serial.printf("Clearing screen\n");
+  EPD_HW_Init(); //Full screen refresh initialization.
+  // EPD_WhiteScreen_White(); //Clear screen function.
+  EPD_WhiteScreen_Black();
+  EPD_DeepSleep(); //Enter the sleep mode and please do not delete it, otherwise it will reduce the lifespan of the screen.
+  Serial.println("Done");
 }
