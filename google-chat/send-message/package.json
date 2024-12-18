@@ -1,0 +1,20 @@
+{
+  "name": "send-message",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node -r ./env.js ./index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "dotenv": "^16.4.7"
+  },
+  "dependencies": {
+    "axios": "^1.7.9",
+    "googleapis": "^144.0.0",
+    "open": "^10.1.0"
+  }
+}
