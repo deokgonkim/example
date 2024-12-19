@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node -r ./env.js ./index.js",
+    "index": "node -r ./env.js ./index.js",
+    "join": "node -r ./env.js ./join.js",
+    "list": "node -r ./env.js ./list.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
