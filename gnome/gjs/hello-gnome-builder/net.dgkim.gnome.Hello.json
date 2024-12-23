@@ -1,10 +1,10 @@
 {
     "id" : "net.dgkim.gnome.Hello",
     "runtime" : "org.gnome.Platform",
-    "runtime-version" : "master",
+    "runtime-version" : "46",
     "sdk" : "org.gnome.Sdk",
     "sdk-extensions" : [
-        "org.freedesktop.Sdk.Extension.node18",
+        "org.freedesktop.Sdk.Extension.node20",
         "org.freedesktop.Sdk.Extension.typescript"
     ],
     "command" : "net.dgkim.gnome.Hello",
@@ -16,7 +16,7 @@
         "--socket=wayland"
     ],
     "build-options" : {
-        "append-path" : "/usr/lib/sdk/typescript/bin:/usr/lib/sdk/node18/bin"
+        "append-path" : "/usr/lib/sdk/typescript/bin:/usr/lib/sdk/node20/bin"
     },
     "cleanup" : [
         "/include",
@@ -36,8 +36,8 @@
             "buildsystem" : "meson",
             "sources" : [
                 {
-                    "type" : "git",
-                    "url" : "file:///home/dgkim/git/example/gnome/gjs"
+                    "type" : "dir",
+                    "path" : "/home/dgkim/git/example/gnome/gjs/hello-gnome-builder"
                 }
             ]
         }
