@@ -1,0 +1,6 @@
+data/net.dgkim.gnome.Hello.desktop.in
+data/net.dgkim.gnome.Hello.metainfo.xml.in
+data/net.dgkim.gnome.Hello.gschema.xml
+src/main.js
+src/window.js
+src/window.ui

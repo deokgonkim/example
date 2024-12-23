@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=hello
+Exec=net.dgkim.gnome.Hello
+Icon=net.dgkim.gnome.Hello
+Terminal=false
+Type=Application
+Categories=GTK;
+StartupNotify=true
