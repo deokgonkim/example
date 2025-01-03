@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>gRPC-Web Example</title>
+<script src="./dist/main.js"></script>
+</head>
+<body>
+  <p>Open up the developer console and see the logs for the output.</p>
+  <label>
+    Name:
+  </label>
+  <input name="name" value="" />
+  <button onclick="send()">Send</button>
+  <hr />
+  <textarea name="response" rows="10" cols="50"></textarea>
+  <script>
+    function send() {
+      const name = document.querySelector('input[name="name"]').value;
+      const responseDom = document.querySelector('textarea[name="response"]');
+      responseDom.value = '';
+      helloer(name).then((message) => {
+        responseDom.value = message;
+      });
+      console.log('Send');
+    }
+  </script>
+</body>
+</html>

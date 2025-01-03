@@ -1,0 +1,20 @@
+version: '3'
+
+services:
+  envoy:
+    image: envoyproxy/envoy:v1.22.0
+    volumes:
+      - ./envoy.yaml:/etc/envoy/envoy.yaml:ro
+    # host network mode is required for envoy to talk to the host that running grpc server
+    network_mode: host
+    # ports option is not vaild in host network mode
+    # ports:
+    #   - 8080:8080
+
+  web:
+    image: nginx:alpine
+    volumes:
+      - ./index.html:/usr/share/nginx/html/index.html:ro
+      - ./dist:/usr/share/nginx/html/dist:ro
+    ports:
+      - 80:80
