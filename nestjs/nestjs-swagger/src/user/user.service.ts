@@ -1,11 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Converter } from 'aws-sdk/clients/dynamodb';
 import { DynamoDBClient, ScanCommand } from '@aws-sdk/client-dynamodb';
-import {
-  DynamoDBDocumentClient,
-  GetCommand,
-  QueryCommand,
-} from '@aws-sdk/lib-dynamodb';
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
 
 const USER_TABLE_NAME = process.env.DYNAMODB_USER_TABLE_NAME || 'user';
 const AWS_REGION = process.env.AWS_REGION || 'ap-northeast-2';
