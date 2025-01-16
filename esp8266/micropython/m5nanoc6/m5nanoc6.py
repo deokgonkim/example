@@ -18,6 +18,7 @@ def main():
     while True:
         pressed = btn.value()
         if pressed == 0:
+            print('Button Pressed')
             n[0] = spin_color(n[0])
             n.write()
         time.sleep_ms(100)
