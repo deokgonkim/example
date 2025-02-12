@@ -1,0 +1,2 @@
+http://helloworldcollection.de/#Go
+https://go.dev/doc/tutorial/getting-started
