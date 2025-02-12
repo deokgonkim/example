@@ -1,0 +1,226 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Service deployment Resources
+Parameters:
+  ServiceName:
+    Type: String
+    Description: "Servie name"
+  Stage:
+    Type: String
+    Description: "Deployment stage"
+  VpcId:
+    Type: String
+    Description: "VPC ID"
+  PublicSubnet1:
+    Type: String
+    Description: "Public Subnet 1"
+  PublicSubnet2:
+    Type: String
+    Description: "Public Subnet 2"
+  # PublicSubnet3:
+  #   Type: String
+  #   Description: "Public Subnet 3"
+  SecurityGroupPublic:
+    Type: String
+    Description: "Public Loadbalancers Security Group"
+  SecurityGroupVpc:
+    Type: String
+    Description: "VPC Security Group"
+  CertificateArn:
+    Type: String
+    Description: "Certificates to use for Public LoadBalancer"
+  HostedZoneId:
+    Type: String
+    Description: "Route53 Hosted zone Id"
+  HostedZoneName:
+    Type: String
+    Description: "Route53 Hosted Zone Name(Domain Name)"
+  SubDomainName:
+    Type: String
+    Description: "Subdomain name to use"
+  DeploymentVersion:
+    Type: String
+    Description: "Deployment Version"
+  ContainerPort:
+    Type: String
+    Description: "Container's port"
+    Default: 80
+
+  HealthCheckPath:
+    Type: String
+    Default: '/'
+    Description: "Default HTTP Health Check path"
+
+Resources:
+  ## CloudWatch
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/ecs/${ServiceName}-${Stage}
+  
+  ## LoadBalancer
+  TargetGroup1:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckIntervalSeconds: 120
+      # will look for a 200 status code by default unless specified otherwise
+      HealthCheckPath: !Ref HealthCheckPath
+      HealthCheckTimeoutSeconds: 60
+      UnhealthyThresholdCount: 2
+      HealthyThresholdCount: 2
+      Name: !Join ['', [!Ref ServiceName, -tg-1]]
+      Port: !Ref ContainerPort
+      Protocol: HTTP
+      TargetGroupAttributes:
+        - Key: stickiness.enabled
+          Value: true
+        - Key: deregistration_delay.timeout_seconds
+          Value: 10 # default is 300
+      TargetType: ip
+      VpcId: !Ref VpcId
+  TargetGroup2:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckIntervalSeconds: 120
+      # will look for a 200 status code by default unless specified otherwise
+      HealthCheckPath: !Ref HealthCheckPath
+      HealthCheckTimeoutSeconds: 60
+      UnhealthyThresholdCount: 2
+      HealthyThresholdCount: 2
+      Name: !Join ['', [!Ref ServiceName, -tg-2]]
+      Port: !Ref ContainerPort
+      Protocol: HTTP
+      TargetGroupAttributes:
+        - Key: stickiness.enabled
+          Value: true
+        - Key: deregistration_delay.timeout_seconds
+          Value: 10 # default is 300
+      TargetType: ip
+      VpcId: !Ref VpcId
+  ListenerHTTPS:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - TargetGroupArn: !Ref TargetGroup1
+          Type: forward
+      LoadBalancerArn: !Ref LoadBalancer
+      Port: 443
+      Protocol: HTTPS
+      Certificates:
+        - CertificateArn: !Ref CertificateArn
+  LoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      LoadBalancerAttributes:
+        # this is the default, but is specified here in case it needs to be changed
+        - Key: idle_timeout.timeout_seconds
+          Value: 60
+      Name: !Join ['', [!Ref ServiceName, -lb]]
+      # "internal" is also an option
+      Scheme: internet-facing
+      SecurityGroups:
+        # - !Ref LoadbalancerSecurityGroup
+        - !Ref SecurityGroupVpc
+        - !Ref SecurityGroupPublic
+      Subnets:
+        - !Ref PublicSubnet1
+        - !Ref PublicSubnet2
+  
+  ## ECS
+  Cluster:
+    Type: AWS::ECS::Cluster
+    Properties: 
+      ClusterName: !Sub ${ServiceName}-${Stage}-cluster
+
+  TaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub ${ServiceName}-${Stage}
+      Cpu: 512 # 0.5 vCPU
+      Memory: 1024 # 1 GB
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      ExecutionRoleArn: !Sub arn:aws:iam::${AWS::AccountId}:role/ecsTaskExecutionRole
+      TaskRoleArn:
+        Fn::ImportValue: !Sub ${ServiceName}:ServiceRoleArn
+      ContainerDefinitions:
+        - Name: !Ref 'ServiceName'
+          # Cpu: !Ref 'ContainerCpu'
+          # Memory: !Ref 'ContainerMemory'
+          # Specify Image manually
+          # Image: !Ref 'ImageUrl'
+          # Or Specify Shared Repositories
+          Image: !Sub
+            - '${REPOSITORY_URI}:latest'
+            - REPOSITORY_URI:
+                Fn::ImportValue: !Sub ${ServiceName}:RepositoryUri
+          PortMappings:
+            - ContainerPort: !Ref ContainerPort
+          Environment:
+            # the other environment variables are loaded from SecretsManager
+            - Name: SERVICE_NAME
+              Value: !Ref ServiceName
+            - Name: STAGE
+              Value: !Ref Stage
+            - Name: API_VERSION
+              Value: !Ref DeploymentVersion
+            
+          LogConfiguration:
+            LogDriver: 'awslogs'
+            Options:
+              awslogs-group: !Sub /aws/ecs/${ServiceName}-${Stage}
+              awslogs-region: !Ref 'AWS::Region'
+              awslogs-stream-prefix: !Ref 'ServiceName'
+
+  Service:
+    Type: AWS::ECS::Service
+    # This dependency is needed so that the load balancer is setup correctly in time
+    DependsOn:
+      - ListenerHTTPS
+    Properties:
+      # CloudFormation cannot update a stack when a custom-named resource requires replacing
+      ServiceName: !Ref ServiceName
+      Cluster: !Ref Cluster
+      # To use EFS, set PlatformVersion to 1.4.0 otherwise LATEST
+      PlatformVersion: 1.4.0
+      TaskDefinition: !Ref TaskDefinition
+      DeploymentConfiguration:
+        MinimumHealthyPercent: 100
+        MaximumPercent: 200
+      DeploymentController:
+        Type: ECS
+      DesiredCount: 1
+      # This may need to be adjusted if the container takes a while to start up
+      HealthCheckGracePeriodSeconds: 300
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          # change to DISABLED if you're using private subnets that have access to a NAT gateway
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref PublicSubnet1
+            - !Ref PublicSubnet1
+          SecurityGroups:
+            - !Ref SecurityGroupVpc # - vpc
+      LoadBalancers:
+        - ContainerName: !Ref ServiceName
+          ContainerPort: !Ref ContainerPort
+          TargetGroupArn: !Ref TargetGroup1
+
+  ## Route53 Domain mapping
+  RecordSet:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneName: !Join ['', [!Ref HostedZoneName, .]]
+      Name: !Join ['', [!Ref SubDomainName, ., !Ref HostedZoneName, .]]
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt LoadBalancer.DNSName
+        HostedZoneId: !GetAtt LoadBalancer.CanonicalHostedZoneID
+
+Outputs:
+  ServiceUrl:
+    Description: The url for service
+    Value: !Sub ${SubDomainName}.${HostedZoneName}
+    Export:
+      Name: !Sub ${ServiceName}:${Stage}:ServiceUrl

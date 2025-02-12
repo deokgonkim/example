@@ -1,0 +1,11 @@
+---
+Parameters:
+  SecretsName:
+    Type: String
+
+Resources:
+  SecretsManager:
+    Type: AWS::SecretsManager::Secret
+    Properties: 
+      Description: !Sub "Secrets Manager of ${SecretsName}"
+      Name: !Ref SecretsName

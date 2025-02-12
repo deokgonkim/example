@@ -1,0 +1,56 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Service Shared Resources
+Parameters:
+  ServiceName:
+    Type: String
+    Description: "Servie name"
+  ECRRepositoryName:
+    Type: String
+    Description: "Name of the ECR repository."
+
+Resources:
+  ECRRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: !Ref 'ECRRepositoryName'
+
+  ECSRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: [ecs-tasks.amazonaws.com]
+            Action: ['sts:AssumeRole']
+      Path: /
+      Policies:
+        - PolicyName: ecs-service
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  # ECS Service can use SQS
+                  - 'sqs:*'
+                  # ECS Service can use SNS
+                  - 'sns:*'
+                  # ECS Service can query secretsmanager
+                  - 'secretsmanager:*'
+                Resource: '*'
+
+Outputs:
+  ECRName:
+    Description: The name of the Elastic Container Registry
+    Value: !Ref 'ECRRepository'
+    Export:
+      Name: !Sub ${ServiceName}:RepositoryName
+  ECRUri:
+    Description: The URL of the Elastic Container Registry
+    Value: !GetAtt 'ECRRepository.RepositoryUri'
+    Export:
+      Name: !Sub ${ServiceName}:RepositoryUri
+  ServiceRoleArn:
+    Description: The Role ARN of ServiceRole
+    Value: !GetAtt 'ECSRole.Arn'
+    Export:
+      Name: !Sub ${ServiceName}:ServiceRoleArn

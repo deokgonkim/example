@@ -1,0 +1,14 @@
+version: '3.7'
+
+services:
+  front-api:
+    build:
+      context: ./front-api
+    env_file: .env.local
+    environment:
+      - SERVICE_NAME=front-api
+      - STAGE=local-docker
+    volumes:
+      - ./front-api:/app
+    ports:
+      - 3000:3000
