@@ -1,0 +1,8 @@
+{
+  "name": "dgkim's first extension",
+  "description": "This is a toy",
+  "uuid": "dgkim-first@dgkim.net",
+  "shell-version": [
+    "46"
+  ]
+}
