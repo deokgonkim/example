@@ -4,5 +4,7 @@
   "uuid": "dgkim-first@dgkim.net",
   "shell-version": [
     "46"
-  ]
+  ],
+  "gettext-domain": "dgkim-first@dgkim.net",
+  "settings-schema": "org.gnome.shell.extensions.dgkim-first"
 }
