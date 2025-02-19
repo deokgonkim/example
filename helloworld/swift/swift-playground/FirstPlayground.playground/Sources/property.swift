@@ -1,5 +1,51 @@
 import Foundation
 
+@propertyWrapper
+struct LogValue {
+    private var holder: String
+    
+    var projectedValue: String
+    
+    public var wrappedValue: String {
+        get {
+            print("Getting value on \(self)")
+            return holder
+        }
+        set {
+            print("Setting value on \(self)")
+            holder = newValue
+            projectedValue = holder.uppercased()
+        }
+    }
+    
+    public init(wrappedValue: String) {
+        holder = wrappedValue
+        projectedValue = holder.uppercased()
+    }
+}
+
+public func testPropertyWrapperLogValue() {
+    struct SomeStruct {
+        @LogValue var name: String = ""
+        
+//        init(name: String) {
+//            self.name = name
+//        }
+    }
+    
+    var ss = SomeStruct(name: "dgkim")
+    print(ss)
+    
+    print("change name of ss")
+    ss.name = "new dgkim"
+    
+    print(ss)
+    print(ss.name)
+    print(ss.$name)
+    ss.$name = "dgkim"
+    print(ss.$name)
+}
+
 
 public func testPropertyWrapper() {
     @propertyWrapper
@@ -87,17 +133,17 @@ public func testPropertyObserverInherit() {
     
     class SomeOtherClass: SomeClass {
         var age: Int = 0
-//        override var name: String // {
-//            didSet {
-//                print("NAME IS SET TO \(oldValue) => \(name)")
-//            }
+        override var name: String {
+            didSet {
+                print("NAME IS SET TO \(oldValue) => \(name)")
+            }
 //            get {
 //                self.name
 //            }
 //            set {
 //                self.name = "NEW NAME \(newValue)"
 //            }
-//        }
+        }
         override init(_ name: String) {
             super.init()
             self.name = name
@@ -108,8 +154,8 @@ public func testPropertyObserverInherit() {
     var s = SomeOtherClass("name1")
     print(s)
     print("s.name = \(s.name)")
-//    s.name = "name2"
-//    print("s.name = \(s.name)")
+    s.name = "name2"
+    print("s.name = \(s.name)")
     print("done")
 }
 

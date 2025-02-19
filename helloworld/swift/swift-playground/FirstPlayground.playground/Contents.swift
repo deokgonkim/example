@@ -1,7 +1,7 @@
 import UIKit
 
 //MARK: test api
-testAPIClient()
+//testAPIClient()
 //testStringToApiResponse()
 //testCombine1()
 //testSimpleCombine()
@@ -69,6 +69,7 @@ testAPIClient()
 //testOperators()
 
 //MARK: test property
+testPropertyWrapperLogValue()
 //testPropertyWrapper()
 //testPropertyObserver()
 //testPropertyObserverInherit()
