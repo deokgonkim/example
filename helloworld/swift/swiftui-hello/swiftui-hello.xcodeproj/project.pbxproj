@@ -14,6 +14,8 @@
 		2F3542FB2893AD30001CADDC /* swiftui_helloTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F3542FA2893AD30001CADDC /* swiftui_helloTests.swift */; };
 		2F3543052893AD30001CADDC /* swiftui_helloUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F3543042893AD30001CADDC /* swiftui_helloUITests.swift */; };
 		2F3543072893AD30001CADDC /* swiftui_helloUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F3543062893AD30001CADDC /* swiftui_helloUITestsLaunchTests.swift */; };
+		2FD8436128AA2BBF00008E44 /* LocationHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FD8436028AA2BBF00008E44 /* LocationHelper.swift */; };
+		2FD8436328AA352E00008E44 /* TemperatureChart.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FD8436228AA352E00008E44 /* TemperatureChart.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -44,6 +46,8 @@
 		2F3543002893AD30001CADDC /* swiftui-helloUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "swiftui-helloUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		2F3543042893AD30001CADDC /* swiftui_helloUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = swiftui_helloUITests.swift; sourceTree = "<group>"; };
 		2F3543062893AD30001CADDC /* swiftui_helloUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = swiftui_helloUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		2FD8436028AA2BBF00008E44 /* LocationHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationHelper.swift; sourceTree = "<group>"; };
+		2FD8436228AA352E00008E44 /* TemperatureChart.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemperatureChart.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -98,6 +102,8 @@
 				2F3542EB2893AD2F001CADDC /* ContentView.swift */,
 				2F3542ED2893AD30001CADDC /* Assets.xcassets */,
 				2F3542EF2893AD30001CADDC /* Preview Content */,
+				2FD8436028AA2BBF00008E44 /* LocationHelper.swift */,
+				2FD8436228AA352E00008E44 /* TemperatureChart.swift */,
 			);
 			path = "swiftui-hello";
 			sourceTree = "<group>";
@@ -257,6 +263,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2FD8436128AA2BBF00008E44 /* LocationHelper.swift in Sources */,
+				2FD8436328AA352E00008E44 /* TemperatureChart.swift in Sources */,
 				2F3542EC2893AD2F001CADDC /* ContentView.swift in Sources */,
 				2F3542EA2893AD2F001CADDC /* swiftui_helloApp.swift in Sources */,
 			);
@@ -420,6 +428,7 @@
 				DEVELOPMENT_TEAM = 3QQHC8AMXM;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Using location service to show your location";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -449,6 +458,7 @@
 				DEVELOPMENT_TEAM = 3QQHC8AMXM;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Using location service to show your location";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
