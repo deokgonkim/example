@@ -17,16 +17,52 @@
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
-
 import GObject from 'gi://GObject';
 import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
 import Gtk from 'gi://Gtk?version=4.0';
-import Adw from 'gi://Adw?version=1';
+import Adw from 'gi://Adw';
+import Soup from 'gi://Soup';
+
+const byteArray = imports.byteArray;
 
 import { HelloWindow } from './window.js';
 
 pkg.initGettext();
 pkg.initFormat();
+
+
+export async function fetchData(url) {
+    return new Promise((resolve, reject) => {
+        let session = new Soup.Session();
+        let message = new Soup.Message({ method: 'GET', uri: GLib.Uri.parse(url, null) });
+        console.log('prepared message');
+        session.send_async(message, null, null, (session, result) => {
+            try {
+            console.log('in callback');
+                let stream = session.send_finish(result);
+
+                stream.read_bytes_async(4096, null, null, (inputStream, res) => {
+                    let data;
+
+                    try {
+                        data = inputStream.read_bytes_finish(res);
+                        const stringResponse = byteArray.toString(byteArray.fromGBytes(data))
+                        resolve(stringResponse);
+                    } catch (e) {
+                        logError(e);
+                        reject(e);
+                    } finally {
+                        log(`body:\n${byteArray.toString(byteArray.fromGBytes(data))}`);
+                    }
+                });
+            } catch (error) {
+                console.error(error);
+                reject(error);
+            }
+        });
+    });
+}
 
 export const HelloApplication = GObject.registerClass(
     class HelloApplication extends Adw.Application {

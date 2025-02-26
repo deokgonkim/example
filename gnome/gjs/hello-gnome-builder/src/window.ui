@@ -20,11 +20,29 @@
           </object>
         </child>
         <property name="content">
-          <object class="GtkLabel" id="label">
-            <property name="label">Hello, World!</property>
-            <style>
-              <class name="title-1"/>
-            </style>
+          <object class="GtkListBox">
+            <child>
+              <object class="GtkLabel" id="label">
+                <property name="label">Hello, World!</property>
+                <style>
+                  <class name="title-1"/>
+                </style>
+              </object>
+            </child>
+            <child>
+              <object class="GtkLabel" id="label2">
+                <property name="label">Hello, {}!</property>
+                <style>
+                  <class name="title-1"/>
+                </style>
+              </object>
+            </child>
+            <child>
+              <object class="GtkButton" id="button">
+                <property name="label">Click!!</property>
+                <signal name="clicked" handler="clickLabel" />
+              </object>
+            </child>
           </object>
         </property>
       </object>

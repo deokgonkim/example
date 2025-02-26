@@ -22,13 +22,27 @@ import GObject from 'gi://GObject';
 import Gtk from 'gi://Gtk';
 import Adw from 'gi://Adw';
 
+import { fetchData } from './main.js';
+
 export const HelloWindow = GObject.registerClass({
     GTypeName: 'HelloWindow',
     Template: 'resource:///net/dgkim/gnome/Hello/window.ui',
-    InternalChildren: ['label'],
+    InternalChildren: ['label', 'label2'],
 }, class HelloWindow extends Adw.ApplicationWindow {
     constructor(application) {
         super({ application });
+        this.counter = 0;
+    }
+
+    clickLabel() {
+      console.log('clickLabel of window');
+      this.counter += 1;
+      fetchData('https://www.dgkim.net/').then((response) => {
+      console.log('response', response);
+          this._label2.set_label(`Hello!!${response.substring(0, 100)}`);
+      }).catch((error) => {
+      console.log('got error', error);
+      });
     }
 });
 
