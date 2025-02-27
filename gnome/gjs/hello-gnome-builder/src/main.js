@@ -53,7 +53,7 @@ export async function fetchData(url) {
                         logError(e);
                         reject(e);
                     } finally {
-                        log(`body:\n${byteArray.toString(byteArray.fromGBytes(data))}`);
+                        // log(`body:\n${byteArray.toString(byteArray.fromGBytes(data))}`);
                     }
                 });
             } catch (error) {

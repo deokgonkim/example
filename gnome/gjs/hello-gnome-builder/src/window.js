@@ -20,6 +20,7 @@
 
 import GObject from 'gi://GObject';
 import Gtk from 'gi://Gtk';
+import Gio from 'gi://Gio';
 import Adw from 'gi://Adw';
 
 import { fetchData } from './main.js';
@@ -35,14 +36,29 @@ export const HelloWindow = GObject.registerClass({
     }
 
     clickLabel() {
-      console.log('clickLabel of window');
-      this.counter += 1;
-      fetchData('https://www.dgkim.net/').then((response) => {
-      console.log('response', response);
-          this._label2.set_label(`Hello!!${response.substring(0, 100)}`);
-      }).catch((error) => {
-      console.log('got error', error);
-      });
+        console.log('clickLabel of window');
+        this.counter += 1;
+        fetchData('https://www.dgkim.net/').then((response) => {
+        // console.log('response', response);
+            this._label2.set_label(`Hello!!${response.substring(0, 100)}`);
+        }).catch((error) => {
+            logError('got error', error);
+        });
+
+        const proc = Gio.Subprocess.new(
+            ['ls', '-a'],
+            Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_PIPE,
+        );
+
+        proc.communicate_utf8_async(null, null, (proc, res) => {
+            try {
+                const [result, stdout, stderr] = proc.communicate_utf8_finish(res);
+                log('read stdout', stdout);
+                log('read stderr', stderr);
+            } catch(e) {
+                logError(e);
+            }
+        });
     }
 });
 
