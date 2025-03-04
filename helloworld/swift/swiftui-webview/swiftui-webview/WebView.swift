@@ -54,6 +54,10 @@ struct WebView: UIViewRepresentable {
         webView.navigationDelegate = context.coordinator
         webView.allowsBackForwardNavigationGestures = true
         webView.scrollView.isScrollEnabled = true
+        
+        if #available(iOS 16.4, *) {
+            webView.isInspectable = true
+        }
 
         LocationManager.shared.requestLocationAuthorization()
        return webView
