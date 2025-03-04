@@ -36,8 +36,7 @@ struct WebView: UIViewRepresentable {
     
     // Make a coordinator to co-ordinate with WKWebView's default delegate functions
     func makeCoordinator() -> Coordinator {
-        let c = Coordinator(self, showAlert: self.$showAlert)
-        return c
+        Coordinator(self, showAlert: self.$showAlert)
     }
     
     func makeUIView(context: Context) -> WKWebView {
@@ -55,7 +54,7 @@ struct WebView: UIViewRepresentable {
         webView.navigationDelegate = context.coordinator
         webView.allowsBackForwardNavigationGestures = true
         webView.scrollView.isScrollEnabled = true
-        
+
         LocationManager.shared.requestLocationAuthorization()
        return webView
     }
@@ -77,8 +76,8 @@ struct WebView: UIViewRepresentable {
     class Coordinator : NSObject {
         var parent: WebView
         var delegate: WebViewHandlerDelegate?
-        weak var valueSubscriber: AnyCancellable? = nil
-        weak var webViewNavigationSubscriber: AnyCancellable? = nil
+        var valueSubscriber: AnyCancellable? = nil
+        var webViewNavigationSubscriber: AnyCancellable? = nil
         
         //TODO: I don't like this.
         //TODO: I want to use @Binding but, ...
@@ -98,6 +97,8 @@ struct WebView: UIViewRepresentable {
 //            self.isConfirm = isConfirm
 //            self.alertMessage = alertMessage
 //            self.confirmHandler = confirmHandler
+            
+            
             
             self.delegate = parent
         }
@@ -181,18 +182,19 @@ extension WebView.Coordinator : WKNavigationDelegate {
     func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
         // Shows loader
         parent.viewModel.showLoader.send(true)
-        self.webViewNavigationSubscriber = self.parent.viewModel.webViewNavigationPublisher.receive(on: RunLoop.main).sink(receiveValue: { navigation in
+        
+        self.webViewNavigationSubscriber = parent.viewModel.webViewNavigationPublisher.sink(receiveValue: { navigation in
             switch navigation {
-                case .backward:
-                    if webView.canGoBack {
-                        webView.goBack()
-                    }
-                case .forward:
-                    if webView.canGoForward {
-                        webView.goForward()
-                    }
-                case .reload:
-                    webView.reload()
+            case .backward:
+                if webView.canGoBack {
+                    webView.goBack()
+                }
+            case .forward:
+                if webView.canGoForward {
+                    webView.goForward()
+                }
+            case .reload:
+                webView.reload()
             }
         })
     }
