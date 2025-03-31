@@ -1,0 +1,43 @@
+{
+    "display_information": {
+        "name": "slack-app"
+    },
+    "features": {
+        "bot_user": {
+            "display_name": "slack-app",
+            "always_online": false
+        },
+        "shortcuts": [
+            {
+                "name": "Card In",
+                "type": "global",
+                "callback_id": "card_in",
+                "description": "Card In"
+            },
+            {
+                "name": "Card Out",
+                "type": "global",
+                "callback_id": "card_out",
+                "description": "Card Out"
+            }
+        ]
+    },
+    "oauth_config": {
+        "scopes": {
+            "bot": [
+                "channels:read",
+                "chat:write",
+                "commands"
+            ]
+        }
+    },
+    "settings": {
+        "interactivity": {
+            "is_enabled": true,
+            "request_url": "https://dkr2rq3xgf.execute-api.ap-northeast-2.amazonaws.com/slack"
+        },
+        "org_deploy_enabled": false,
+        "socket_mode_enabled": false,
+        "token_rotation_enabled": false
+    }
+}
