@@ -14,15 +14,22 @@ const debounce = (func, delay) => {
 }
 
 const highlightSavedItems = () => {
-    chrome.storage.local.get('positionIds', ({ positionIds }) => {
-        if (!positionIds) return;
+    const site = window.location.hostname;
+    const localStorageKey = `${site}_positionIds`;
+    chrome.storage.local.get(localStorageKey, (response) => {
+        if (!response[localStorageKey]) return;
     
-        positionIds.forEach((positionId) => {
-            const el = document.querySelector(`[data-position-id="${positionId}"]`);
-            if (el) {
+        response[localStorageKey].forEach((positionId) => {
+            const wantedEl = document.querySelector(`[data-position-id="${positionId}"]`);
+            const jumpitEl = document.querySelector(`a[href="/position/${positionId}"]`);
+            if (wantedEl) {
                 console.log(`highlighting positionId: ${positionId}`);
-                el.parentElement.classList.add('highlight');
+                wantedEl.parentElement.classList.add('highlight');
                 // el.classList.add('highlight');
+            } else if (jumpitEl) {
+                console.log(`highlighting positionId: ${positionId}`);
+                jumpitEl.parentElement.classList.add('highlight');
+                // jumpitEl.classList.add('highlight');
             } else {
                 console.log(`positionId: ${positionId} not found`);
             }
@@ -63,12 +70,19 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     console.log('message received', request);
     if (request.action === "updateHighLights") {
         const { positionId, onOff } = request;
-        const el = document.querySelector(`[data-position-id="${positionId}"]`);
-        if (el) {
+        const wantedEl = document.querySelector(`[data-position-id="${positionId}"]`);
+        const jumpitEl = document.querySelector(`a[href="/position/${positionId}"]`);
+        if (wantedEl) {
             if (onOff) {
-                el.parentElement.classList.add('highlight');
+                wantedEl.parentElement.classList.add('highlight');
             } else {
-                el.parentElement.classList.remove('highlight');
+                wantedEl.parentElement.classList.remove('highlight');
+            }
+        } else if (jumpitEl) {
+            if (onOff) {
+                jumpitEl.parentElement.classList.add('highlight');
+            } else {
+                jumpitEl.parentElement.classList.remove('highlight');
             }
         }
     }
