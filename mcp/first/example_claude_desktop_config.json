@@ -1,0 +1,16 @@
+{
+    "mcpServers": {
+        "FirstMCP": {
+            "command": "uv",
+            "env": {
+                "OPENWEATHERMAP_API_KEY": "REDACTED"
+            },
+            "args": [
+                "--directory",
+                "/Users/dgkim/git/example/mcp/first",
+                "run",
+                "main.py"
+            ]
+        }
+    }
+}
