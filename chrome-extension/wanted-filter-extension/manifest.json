@@ -1,0 +1,22 @@
+{
+    "manifest_version": 3,
+    "name": "Wanted Position Highlighter",
+    "version": "0.1",
+    "permissions": [
+        "contextMenus",
+        "storage",
+        "scripting"
+    ],
+    "host_permissions": [
+        "https://www.wanted.co.kr/"
+    ],
+    "background": {
+        "service_worker": "background.js"
+    },
+    "content_scripts": [{
+        "matches": ["https://www.wanted.co.kr/*"],
+        "js": ["content.js"],
+        "css": ["style.css"],
+        "run_at": "document_idle"
+    }]
+}
