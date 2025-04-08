@@ -12,9 +12,28 @@ chrome.runtime.onInstalled.addListener(() => {
         title: "Remove this from the list",
         contexts: ["all"]
     });
+    chrome.contextMenus.create({
+        id: "backup",
+        title: "Backup",
+        contexts: ["all"]
+    })
 });
 
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
+    if (info.menuItemId === 'backup') {
+        chrome.scripting.executeScript({
+            target: { tabId: tab.id },
+            func: () => {
+                console.log('context menu called backup');
+                chrome.runtime.sendMessage({
+                    action: "backup",
+                });
+            },
+            args: [],
+        });
+        return;
+    }
+
     const { linkUrl } = info;
     if (!linkUrl || (
         !WANTED_POSITION_LINK_PATTERN.test(linkUrl) &&
@@ -89,6 +108,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             action: "updateHighLights",
             positionId: message.positionId,
             onOff: false,
+        });
+    } else if (message.action == 'backup') {
+        // download local storage as JSON file
+        chrome.tabs.sendMessage(sender.tab.id, {
+            action: "download",
         });
     }
 });

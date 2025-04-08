@@ -93,5 +93,17 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 }
             });
         }
+    } else if (request.action === 'download') {
+        console.log('download action received');
+        chrome.storage.local.get(null, (result) => {
+            console.log('local storage result', result);
+            const blob = new Blob([JSON.stringify(result, null, 2)]);
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `wanted-filter-extension.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        });
     }
 });
