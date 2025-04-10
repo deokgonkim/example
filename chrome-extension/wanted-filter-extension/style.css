@@ -1,5 +1,6 @@
 .highlight {
-    background-color: red;
-    border-radius: 4px;
-    padding: 2px 4px;
+    background-color: tomato;
+    border-radius: 10px;
+    padding: 5px;
+    margin: 5px;
 }
