@@ -1,0 +1,36 @@
+{
+    "manifest_version": 3,
+    "name": "Job Position Highlighter",
+    "description": "Highlight job positions on job listing sites.\n\nSupported sites:\n- Wanted\n- Jumpit\n- RocketPunch",
+    "browser_specific_settings": {
+        "gecko": {
+            "id": "wanted-filter-extension@dgkim.net"
+        }
+    },
+    "version": "0.1",
+    "permissions": [
+        "contextMenus",
+        "storage",
+        "scripting"
+    ],
+    "host_permissions": [
+        "https://www.wanted.co.kr/",
+        "https://jumpit.saramin.co.kr/",
+        "https://www.rocketpunch.com/"
+    ],
+    "background": {
+        "scripts": [
+            "background.js"
+        ]
+    },
+    "content_scripts": [{
+        "matches": [
+            "https://www.wanted.co.kr/*", 
+            "https://jumpit.saramin.co.kr/*",
+            "https://www.rocketpunch.com/*"
+        ],
+        "js": ["content.js"],
+        "css": ["style.css"],
+        "run_at": "document_idle"
+    }]
+}
