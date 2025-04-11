@@ -1,6 +1,6 @@
 {
     "manifest_version": 3,
-    "name": "Wanted, Jumpit Position Highlighter",
+    "name": "Wanted, Jumpit, Rocketpunch Position Highlighter",
     "version": "0.1",
     "permissions": [
         "contextMenus",
@@ -9,14 +9,18 @@
     ],
     "host_permissions": [
         "https://www.wanted.co.kr/",
-        "https://jumpit.saramin.co.kr/"
+        "https://jumpit.saramin.co.kr/",
+        "https://www.rocketpunch.com/"
     ],
     "background": {
         "service_worker": "background.js"
     },
     "content_scripts": [{
-        "matches": ["https://www.wanted.co.kr/*", 
-                   "https://jumpit.saramin.co.kr/*"],
+        "matches": [
+            "https://www.wanted.co.kr/*", 
+            "https://jumpit.saramin.co.kr/*",
+            "https://www.rocketpunch.com/*"
+        ],
         "js": ["content.js"],
         "css": ["style.css"],
         "run_at": "document_idle"

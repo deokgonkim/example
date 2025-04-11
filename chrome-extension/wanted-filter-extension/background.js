@@ -1,5 +1,8 @@
-const WANTED_POSITION_LINK_PATTERN = /https:\/\/www\.wanted\.co.kr\/wd\/\d+/;
-const JUMPIT_LINK_PATTERN = /https:\/\/jumpit\.saramin\.co\.kr\/position\/\d+/;
+const POSITION_PATTERNS = [
+    /https:\/\/www\.wanted\.co.kr\/wd\/(\d+)/,
+    /https:\/\/jumpit\.saramin\.co\.kr\/position\/(\d+)/,
+    /https:\/\/www\.rocketpunch\.com\/jobs\/(\d+)\/.*/
+]
 
 chrome.runtime.onInstalled.addListener(() => {
     chrome.contextMenus.create({
@@ -35,15 +38,22 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     }
 
     const { linkUrl } = info;
-    if (!linkUrl || (
-        !WANTED_POSITION_LINK_PATTERN.test(linkUrl) &&
-        !JUMPIT_LINK_PATTERN.test(linkUrl))
+    if (!linkUrl ||
+        !POSITION_PATTERNS.some(pattern => pattern.test(linkUrl))
     ) {
         console.log('not a position link', linkUrl);
         return;
     }
+
     const site = linkUrl.split('/')[2];
-    const positionId = linkUrl.split('/').pop();
+    // const positionId = linkUrl.split('/').pop();
+    const positionId = POSITION_PATTERNS.reduce((acc, pattern) => {
+        const match = linkUrl.match(pattern);
+        if (match) {
+            return match[1];
+        }
+        return acc;
+    }, null);
     if (info.menuItemId === "addToList") {
         chrome.scripting.executeScript({
             target: { tabId: tab.id },

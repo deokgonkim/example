@@ -1,4 +1,16 @@
 
+const EL_PATTERNS = {
+    "www.wanted.co.kr": `[data-position-id="#{positionId}"]`,
+    "jumpit.saramin.co.kr": `a[href="/position/#{positionId}"]`,
+    "www.rocketpunch.com": `div[class*="job-card"] > a[href*="/jobs/#{positionId}/"]`,
+}
+
+const CLASS_NAMES = {
+    "www.wanted.co.kr": "highlight",
+    "jumpit.saramin.co.kr": "highlight",
+    "www.rocketpunch.com": "highlight-rocketpunch",
+}
+
 const debounce = (func, delay) => {
     let timeoutId;
     return function(...args) {
@@ -20,20 +32,14 @@ const highlightSavedItems = () => {
         if (!response[localStorageKey]) return;
     
         response[localStorageKey].forEach((positionId) => {
-            const wantedEl = document.querySelectorAll(`[data-position-id="${positionId}"]`);
-            const jumpitEl = document.querySelectorAll(`a[href="/position/${positionId}"]`);
-            if (wantedEl && wantedEl.length > 0) {
-                wantedEl.forEach((el) => {
+            const els = document.querySelectorAll(EL_PATTERNS[site].replace('#{positionId}', positionId));
+
+            if (els && els.length > 0) {
+                els.forEach((el) => {
                     console.log(`highlighting positionId: ${positionId}`);
-                    el.parentElement.classList.add('highlight');
+                    el.parentElement.classList.add(CLASS_NAMES[site]|| 'highlight');
                 });
                 // el.classList.add('highlight');
-            } else if (jumpitEl && jumpitEl.length > 0) {
-                jumpitEl.forEach((el) => {
-                    console.log(`highlighting positionId: ${positionId}`);
-                    el.parentElement.classList.add('highlight');
-                });
-                // jumpitEl.classList.add('highlight');
             } else {
                 console.log(`positionId: ${positionId} not found`);
             }
@@ -72,24 +78,17 @@ observer.observe(document.body, {
 // message listner
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     console.log('message received', request);
+    const site = window.location.hostname;
     if (request.action === "updateHighLights") {
         const { positionId, onOff } = request;
-        const wantedEl = document.querySelectorAll(`[data-position-id="${positionId}"]`);
-        const jumpitEl = document.querySelectorAll(`a[href="/position/${positionId}"]`);
-        if (wantedEl && wantedEl.length > 0) {
-            wantedEl.forEach((el) => {
+        const els = document.querySelectorAll(EL_PATTERNS[window.location.hostname].replace('#{positionId}', positionId));
+
+        if (els && els.length > 0) {
+            els.forEach((el) => {
                 if (onOff) {
-                    el.parentElement.classList.add('highlight');
+                    el.parentElement.classList.add(CLASS_NAMES[site] || 'highlight');
                 } else {
-                    el.parentElement.classList.remove('highlight');
-                }
-            });
-        } else if (jumpitEl && jumpitEl.length > 0) {
-            jumpitEl.forEach((el) => {
-                if (onOff) {
-                    el.parentElement.classList.add('highlight');
-                } else {
-                    el.parentElement.classList.remove('highlight');
+                    el.parentElement.classList.remove(CLASS_NAMES[site] || 'highlight');
                 }
             });
         }
