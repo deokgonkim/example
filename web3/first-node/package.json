@@ -1,0 +1,20 @@
+{
+  "name": "first-node",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start-dev": "ts-node -r ./env.js ./src/index.ts"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "web3": "^4.16.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.19",
+    "dotenv": "^16.5.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  }
+}
