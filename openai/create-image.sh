@@ -9,4 +9,4 @@ else
     DESC="$@"
 fi
 
-openai api image.create -p "$DESC" -n 1
+openai api images.generate -p "$DESC" -n 1
