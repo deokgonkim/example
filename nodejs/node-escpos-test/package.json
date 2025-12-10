@@ -1,0 +1,17 @@
+{
+  "name": "escpos-test",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "canvas": "^3.2.0",
+    "escpos": "^2.5.2",
+    "sharp": "^0.33.5",
+    "usb": "^1.9.2"
+  }
+}
