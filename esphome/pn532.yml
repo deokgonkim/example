@@ -39,6 +39,15 @@ pn532_spi:
   cs_pin: 5
   on_tag:
     then:
+      - http_request.send:
+          method: POST
+          url: !secret nfc_tag_call_url
+          verify_ssl: false
+          headers:
+            Content-Type: application/json
+          json:
+            tag: !lambda
+              return x;
       - rtttl.play:
           # rtttl: 'siren:d=8,o=5,b=100:d,e,d,e,d,e,d,e'
           rtttl: 'two_short:d=4,o=5,b=100:16e6,16e6'
