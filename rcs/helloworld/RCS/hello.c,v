@@ -1,0 +1,59 @@
+head	1.2;
+access;
+symbols;
+locks
+	eric:1.2; strict;
+comment	@ * @;
+
+
+1.2
+date	2024.06.10.08.12.49;	author eric;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2024.06.10.08.06.08;	author eric;	state Exp;
+branches;
+next	;
+
+
+desc
+@Initial checkin
+@
+
+
+1.2
+log
+@print hello again
+@
+text
+@/**
+ * $Id: hello.c,v 1.1 2024/06/10 08:06:08 eric Exp eric $
+ *
+ * $Log: hello.c,v $
+ * Revision 1.1  2024/06/10 08:06:08  eric
+ * Initial revision
+ *
+ */
+#include <stdio.h>
+
+int main(int argc, char* argv[]) {
+	printf("Hello world\n");
+	printf("Hello world\n");
+}
+
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d2 5
+a6 1
+ * $Id$
+a7 1
+ * $Log$
+d12 1
+@

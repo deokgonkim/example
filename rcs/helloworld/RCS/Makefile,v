@@ -1,0 +1,42 @@
+head	1.1;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2024.06.10.08.08.42;	author eric;	state Exp;
+branches;
+next	;
+
+
+desc
+@Initial import
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@##
+# $Id$
+# 
+# $Log$
+##
+
+CC=gcc
+CFLAGS=-I.
+
+hello: hello.o
+	$(CC) -o hello hello.o
+
+hello.o: hello.c
+	$(CC) -c hello.c
+
+clean:
+	rm -f hello.o hello
+
+@
