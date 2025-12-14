@@ -1,0 +1,78 @@
+-- this overlay covers the chat window portion of syukaworld
+-- Run
+-- conky -f conkyrc-for-syuka
+conky.config = {
+    alignment = 'top_left',
+    background = false,
+    border_width = 1,
+    cpu_avg_samples = 2,
+    default_color = 'cyan',
+    default_outline_color = 'white',
+    default_shade_color = 'white',
+    double_buffer = true,
+    draw_borders = true,
+    draw_graph_borders = true,
+    draw_outline = false,
+    draw_shades = false,
+    extra_newline = false,
+    font = 'DejaVu Sans Mono:size=10',
+    gap_x = 1150,
+    gap_y = 300,
+    minimum_height = 5,
+    minimum_width = 5,
+    net_avg_samples = 2,
+    no_buffers = true,
+    own_window = true,
+    own_window_type = 'dock',
+    own_window_argb_visual = false,
+    own_window_argb_value = 64,
+    show_graph_range = false,
+    show_graph_scale = false,
+    stippled_borders = 0,
+    update_interval = 1.0,
+    uppercase = false,
+    use_spacer = 'none',
+    use_xft = true,
+};
+
+conky.text = [[
+${color tomato}Uptime:$color $uptime
+${color tomato}RAM:$color $mem/$memmax - $memperc% ${membar 4}
+${color tomato}Swap:$color $swap/$swapmax - $swapperc% ${swapbar 4}
+${color tomato}CPU Usage:$color $cpu% ${cpubar 4}
+${color tomato}Processes:$color $processes  ${color grey}Running:$color $running_processes
+${color green}-----------------------------------
+${color tomato}File systems:
+ / $color${fs_used /}/${fs_size /} ${fs_bar 6 /}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+]];
