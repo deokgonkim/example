@@ -34,3 +34,7 @@ gcloud compute addresses list
 gcloud functions list
 ```
 
+- Copy files from firebase storage to local
+  ```bash
+  gsutil -m cp -R gs://some-project-id.appspot.com/ ./
+  ```
