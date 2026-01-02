@@ -1,0 +1,188 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: DynamoDB stream -> SNS -> SQS -> Lambda pipeline.
+
+Parameters:
+  DynamoDbTemplateUrl:
+    Type: String
+    Description: S3 URL for nested/dynamodb.yaml.
+  SnsTemplateUrl:
+    Type: String
+    Description: S3 URL for nested/sns.yaml.
+  SqsTemplateUrl:
+    Type: String
+    Description: S3 URL for nested/sqs.yaml.
+  TableName:
+    Type: String
+    Default: Products
+    Description: DynamoDB table name for products.
+
+Resources:
+  DynamoDbStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Ref DynamoDbTemplateUrl
+      Parameters:
+        TableName: !Ref TableName
+
+  SnsStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Ref SnsTemplateUrl
+
+  SqsStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Ref SqsTemplateUrl
+      Parameters:
+        TopicArn: !GetAtt SnsStack.Outputs.TopicArn
+
+  StreamToSnsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: StreamToSnsPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - dynamodb:DescribeStream
+                  - dynamodb:GetRecords
+                  - dynamodb:GetShardIterator
+                  - dynamodb:ListStreams
+                Resource: !GetAtt DynamoDbStack.Outputs.StreamArn
+              - Effect: Allow
+                Action: sns:Publish
+                Resource: !GetAtt SnsStack.Outputs.TopicArn
+
+  StreamToSnsFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Runtime: python3.11
+      Handler: index.handler
+      Role: !GetAtt StreamToSnsRole.Arn
+      Timeout: 30
+      Environment:
+        Variables:
+          TOPIC_ARN: !GetAtt SnsStack.Outputs.TopicArn
+      Code:
+        ZipFile: |
+          import json
+          import os
+          import boto3
+
+          sns = boto3.client("sns")
+          topic_arn = os.environ["TOPIC_ARN"]
+
+          def handler(event, context):
+              for record in event.get("Records", []):
+                  payload = {
+                      "eventName": record.get("eventName"),
+                      "keys": record.get("dynamodb", {}).get("Keys"),
+                      "newImage": record.get("dynamodb", {}).get("NewImage"),
+                      "oldImage": record.get("dynamodb", {}).get("OldImage"),
+                  }
+                  sns.publish(TopicArn=topic_arn, Message=json.dumps(payload))
+              return {"published": len(event.get("Records", []))}
+
+  StreamToSnsMapping:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      EventSourceArn: !GetAtt DynamoDbStack.Outputs.StreamArn
+      FunctionName: !Ref StreamToSnsFunction
+      StartingPosition: LATEST
+      BatchSize: 100
+
+  QueueProcessorRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: QueueProcessorPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - sqs:ReceiveMessage
+                  - sqs:DeleteMessage
+                  - sqs:GetQueueAttributes
+                Resource: !GetAtt SqsStack.Outputs.QueueArn
+
+  QueueProcessorFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Runtime: python3.11
+      Handler: index.handler
+      Role: !GetAtt QueueProcessorRole.Arn
+      Timeout: 30
+      Code:
+        ZipFile: |
+          import json
+
+          def handler(event, context):
+              # Process SQS records that contain SNS payloads.
+              records = event.get("Records", [])
+              for record in records:
+                  body = record.get("body", "{}")
+                  try:
+                      payload = json.loads(body)
+                  except json.JSONDecodeError:
+                      payload = {"raw": body}
+                  print(json.dumps({"sqs": record.get("messageId"), "payload": payload}))
+              return {"processed": len(records)}
+
+  QueueProcessorMapping:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      EventSourceArn: !GetAtt SqsStack.Outputs.QueueArn
+      FunctionName: !Ref QueueProcessorFunction
+      BatchSize: 10
+
+Outputs:
+  TableName:
+    Description: DynamoDB table name.
+    Value: !GetAtt DynamoDbStack.Outputs.TableName
+  StreamArn:
+    Description: DynamoDB stream ARN.
+    Value: !GetAtt DynamoDbStack.Outputs.StreamArn
+  TopicArn:
+    Description: SNS topic ARN for updates.
+    Value: !GetAtt SnsStack.Outputs.TopicArn
+  QueueUrl:
+    Description: SQS queue URL receiving updates.
+    Value: !GetAtt SqsStack.Outputs.QueueUrl
+  QueueArn:
+    Description: SQS queue ARN receiving updates.
+    Value: !GetAtt SqsStack.Outputs.QueueArn
+  StreamToSnsFunctionArn:
+    Description: Lambda that publishes stream records to SNS.
+    Value: !GetAtt StreamToSnsFunction.Arn
+  QueueProcessorFunctionArn:
+    Description: Lambda that processes SQS messages.
+    Value: !GetAtt QueueProcessorFunction.Arn

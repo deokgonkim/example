@@ -1,0 +1,31 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: DynamoDB table for products with streams enabled.
+
+Parameters:
+  TableName:
+    Type: String
+    Default: Products
+    Description: DynamoDB table name for products.
+
+Resources:
+  ProductsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Ref TableName
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: ProductId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: ProductId
+          KeyType: HASH
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+
+Outputs:
+  TableName:
+    Description: DynamoDB table name.
+    Value: !Ref ProductsTable
+  StreamArn:
+    Description: DynamoDB stream ARN.
+    Value: !GetAtt ProductsTable.StreamArn

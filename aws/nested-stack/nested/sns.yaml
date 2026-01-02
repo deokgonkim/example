@@ -1,0 +1,13 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: SNS topic for product update notifications.
+
+Resources:
+  UpdatesTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      DisplayName: ProductsUpdateStreamTopic
+
+Outputs:
+  TopicArn:
+    Description: SNS topic ARN for updates.
+    Value: !Ref UpdatesTopic

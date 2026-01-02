@@ -1,0 +1,45 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: SQS queue subscribed to the SNS updates topic.
+
+Parameters:
+  TopicArn:
+    Type: String
+    Description: SNS topic ARN to subscribe the queue to.
+
+Resources:
+  UpdatesQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      VisibilityTimeout: 60
+
+  UpdatesQueuePolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      Queues:
+        - !Ref UpdatesQueue
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: '*'
+            Action: sqs:SendMessage
+            Resource: !GetAtt UpdatesQueue.Arn
+            Condition:
+              ArnEquals:
+                aws:SourceArn: !Ref TopicArn
+
+  UpdatesSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn: !Ref TopicArn
+      Protocol: sqs
+      Endpoint: !GetAtt UpdatesQueue.Arn
+      RawMessageDelivery: true
+
+Outputs:
+  QueueUrl:
+    Description: SQS queue URL receiving updates.
+    Value: !Ref UpdatesQueue
+  QueueArn:
+    Description: SQS queue ARN receiving updates.
+    Value: !GetAtt UpdatesQueue.Arn

@@ -1,0 +1,31 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Parent stack for DynamoDB stream -> SNS -> SQS -> Lambda pipeline.
+
+Parameters:
+  NestedTemplateUrl:
+    Type: String
+    Description: S3 URL for the nested stack template (nested/stack.yaml).
+  DynamoDbTemplateUrl:
+    Type: String
+    Description: S3 URL for nested/dynamodb.yaml.
+  SnsTemplateUrl:
+    Type: String
+    Description: S3 URL for nested/sns.yaml.
+  SqsTemplateUrl:
+    Type: String
+    Description: S3 URL for nested/sqs.yaml.
+
+Resources:
+  PipelineStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Ref NestedTemplateUrl
+      Parameters:
+        DynamoDbTemplateUrl: !Ref DynamoDbTemplateUrl
+        SnsTemplateUrl: !Ref SnsTemplateUrl
+        SqsTemplateUrl: !Ref SqsTemplateUrl
+
+Outputs:
+  NestedStackId:
+    Description: ID of the nested stack.
+    Value: !Ref PipelineStack
