@@ -76,19 +76,21 @@ def resolve_channel_id(youtube, entry):
                 return items[0]["id"]
         except Exception:
             pass
-    try:
-        response = youtube.search().list(
-            part="snippet",
-            q=entry["value"],
-            type="channel",
-            maxResults=1
-        ).execute()
-        items = response.get("items", [])
-        if items:
-            return items[0]["id"]["channelId"]
-    except Exception:
-        pass
     return None
+    # Search returns may contain inappropriate result
+    # try:
+    #     response = youtube.search().list(
+    #         part="snippet",
+    #         q=entry["value"],
+    #         type="channel",
+    #         maxResults=1
+    #     ).execute()
+    #     items = response.get("items", [])
+    #     if items:
+    #         return items[0]["id"]["channelId"]
+    # except Exception:
+    #     pass
+    # return None
 
 def fetch_channels_from_inputs(youtube, channel_inputs):
     channels = []
