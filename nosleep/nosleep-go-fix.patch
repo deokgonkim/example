@@ -1,0 +1,30 @@
+diff --git a/nosleep.go b/nosleep.go
+index 1111111..2222222 100644
+--- a/nosleep.go
++++ b/nosleep.go
+@@ -24,7 +24,6 @@ func buildGdbusArgs(appID, reason string) []string {
+ 		"--object-path", portalPath,
+ 		"--method", portalIface + ".Inhibit",
+ 		appID,
+-		"",
+ 		inhibitIdle,
+ 		options,
+ 	}
+ }
+@@ -36,9 +35,14 @@ func main() {
+ 	reason := flag.String("reason", "Keeping the session awake", "Human-readable reason for the inhibit request")
+ 	flag.Parse()
+ 
+-	args := buildGdbusArgs(*appID, *reason)
+-	cmd := exec.Command("gdbus", args...)
+-	output, err := cmd.CombinedOutput()
++	output, err := exec.Command("gdbus", buildGdbusArgs(*appID, *reason)...).CombinedOutput()
++	if err != nil {
++		// Some portal versions include a window handle parameter.
++		base := buildGdbusArgs(*appID, *reason)
++		fallback := append(base[:9], append([]string{""}, base[9:]...)...)
++		output, err = exec.Command("gdbus", fallback...).CombinedOutput()
++	}
+ 	if err != nil {
+ 		if os.IsNotExist(err) {
+ 			fmt.Fprintln(os.Stderr, "gdbus not found. Install the 'glib2.0-bin' package.")

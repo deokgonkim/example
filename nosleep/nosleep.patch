@@ -1,0 +1,367 @@
+diff --git a/home/dgkim/git/example/nosleep/nosleep.py b/home/dgkim/git/example/nosleep/nosleep.py
+new file mode 100755
+index 0000000..9156cf7
+--- /dev/null
++++ b/home/dgkim/git/example/nosleep/nosleep.py
+@@ -0,0 +1,85 @@
++#!/usr/bin/env python3
++import argparse
++import subprocess
++import sys
++import time
++
++PORTAL_DEST = "org.freedesktop.portal.Desktop"
++PORTAL_PATH = "/org/freedesktop/portal/desktop"
++PORTAL_IFACE = "org.freedesktop.portal.Inhibit"
++
++# Portal flags: 1=logout, 2=user-switch, 4=suspend, 8=idle
++INHIBIT_IDLE = 8
++
++
++def build_gdbus_args(app_id: str, reason: str) -> list[str]:
++    # gdbus expects a{sv} with variant values.
++    options = "{'reason': <'" + reason.replace("'", "\\'") + "'>}"
++    return [
++        "gdbus",
++        "call",
++        "--session",
++        "--dest",
++        PORTAL_DEST,
++        "--object-path",
++        PORTAL_PATH,
++        "--method",
++        f"{PORTAL_IFACE}.Inhibit",
++        app_id,
++        "",  # No window handle
++        str(INHIBIT_IDLE),
++        options,
++    ]
++
++
++def main() -> int:
++    parser = argparse.ArgumentParser(
++        description="Prevent idle sleep/screensaver via xdg-desktop-portal."
++    )
++    parser.add_argument(
++        "--app-id",
++        default="com.example.nosleep",
++        help="Application ID string for the portal request.",
++    )
++    parser.add_argument(
++        "--reason",
++        default="Keeping the session awake",
++        help="Human-readable reason for the inhibit request.",
++    )
++    args = parser.parse_args()
++
++    gdbus_args = build_gdbus_args(args.app_id, args.reason)
++
++    try:
++        result = subprocess.run(
++            gdbus_args,
++            check=True,
++            stdout=subprocess.PIPE,
++            stderr=subprocess.PIPE,
++            text=True,
++        )
++    except FileNotFoundError:
++        print("gdbus not found. Install the 'glib2.0-bin' package.", file=sys.stderr)
++        return 1
++    except subprocess.CalledProcessError as exc:
++        print("Failed to request inhibit via xdg-desktop-portal.", file=sys.stderr)
++        if exc.stderr:
++            print(exc.stderr.strip(), file=sys.stderr)
++        return exc.returncode
++
++    # The returned handle is tied to this process's bus name; keep it alive.
++    handle = result.stdout.strip()
++    print("Inhibit active. Press Ctrl+C to release.")
++    if handle:
++        print(f"Portal handle: {handle}")
++
++    try:
++        while True:
++            time.sleep(60)
++    except KeyboardInterrupt:
++        print("Releasing inhibit and exiting.")
++        return 0
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())
+diff --git a/home/dgkim/git/example/nosleep/nosleep.js b/home/dgkim/git/example/nosleep/nosleep.js
+new file mode 100755
+index 0000000..5ce1f3d
+--- /dev/null
++++ b/home/dgkim/git/example/nosleep/nosleep.js
+@@ -0,0 +1,87 @@
++#!/usr/bin/env node
++'use strict';
++
++const { spawnSync } = require('child_process');
++
++const PORTAL_DEST = 'org.freedesktop.portal.Desktop';
++const PORTAL_PATH = '/org/freedesktop/portal/desktop';
++const PORTAL_IFACE = 'org.freedesktop.portal.Inhibit';
++const INHIBIT_IDLE = 8; // idle/screen saver
++
++function parseArgs(argv) {
++  const args = { appId: 'com.example.nosleep', reason: 'Keeping the session awake' };
++  for (let i = 2; i < argv.length; i++) {
++    const arg = argv[i];
++    if (arg === '--app-id' && argv[i + 1]) {
++      args.appId = argv[++i];
++    } else if (arg === '--reason' && argv[i + 1]) {
++      args.reason = argv[++i];
++    } else if (arg === '-h' || arg === '--help') {
++      args.help = true;
++    }
++  }
++  return args;
++}
++
++function buildGdbusArgs(appId, reason) {
++  const escapedReason = reason.replace(/'/g, "\\'");
++  const options = `{'reason': <'${escapedReason}'>}`;
++  return [
++    'call',
++    '--session',
++    '--dest',
++    PORTAL_DEST,
++    '--object-path',
++    PORTAL_PATH,
++    '--method',
++    `${PORTAL_IFACE}.Inhibit`,
++    appId,
++    '',
++    String(INHIBIT_IDLE),
++    options,
++  ];
++}
++
++function main() {
++  const args = parseArgs(process.argv);
++  if (args.help) {
++    console.log('Usage: nosleep.js [--app-id ID] [--reason TEXT]');
++    return 0;
++  }
++
++  const gdbusArgs = buildGdbusArgs(args.appId, args.reason);
++  const res = spawnSync('gdbus', gdbusArgs, { encoding: 'utf8' });
++
++  if (res.error) {
++    if (res.error.code === 'ENOENT') {
++      console.error("gdbus not found. Install the 'glib2.0-bin' package.");
++      return 1;
++    }
++    console.error('Failed to run gdbus.', res.error.message || res.error);
++    return 1;
++  }
++
++  if (res.status !== 0) {
++    console.error('Failed to request inhibit via xdg-desktop-portal.');
++    if (res.stderr) {
++      console.error(res.stderr.trim());
++    }
++    return res.status || 1;
++  }
++
++  const handle = (res.stdout || '').trim();
++  console.log('Inhibit active. Press Ctrl+C to release.');
++  if (handle) {
++    console.log(`Portal handle: ${handle}`);
++  }
++
++  setInterval(() => {}, 60 * 1000);
++  return 0;
++}
++
++process.on('SIGINT', () => {
++  console.log('Releasing inhibit and exiting.');
++  process.exit(0);
++});
++
++process.exitCode = main();
+diff --git a/home/dgkim/git/example/nosleep/nosleep.go b/home/dgkim/git/example/nosleep/nosleep.go
+new file mode 100644
+index 0000000..b5f95d7
+--- /dev/null
++++ b/home/dgkim/git/example/nosleep/nosleep.go
+@@ -0,0 +1,69 @@
++package main
++
++import (
++	"flag"
++	"fmt"
++	"os"
++	"os/exec"
++	"strings"
++	"time"
++)
++
++const (
++	portalDest  = "org.freedesktop.portal.Desktop"
++	portalPath  = "/org/freedesktop/portal/desktop"
++	portalIface = "org.freedesktop.portal.Inhibit"
++	inhibitIdle = "8"
++)
++
++func buildGdbusArgs(appID, reason string) []string {
++	escaped := strings.ReplaceAll(reason, "'", "\\'")
++	options := fmt.Sprintf("{'reason': <'%s'>}", escaped)
++	return []string{
++		"call",
++		"--session",
++		"--dest", portalDest,
++		"--object-path", portalPath,
++		"--method", portalIface + ".Inhibit",
++		appID,
++		inhibitIdle,
++		options,
++	}
++}
++
++func main() {
++	appID := flag.String("app-id", "com.example.nosleep", "Application ID string for the portal request")
++	reason := flag.String("reason", "Keeping the session awake", "Human-readable reason for the inhibit request")
++	flag.Parse()
++
++	output, err := exec.Command("gdbus", buildGdbusArgs(*appID, *reason)...).CombinedOutput()
++	if err != nil {
++		// Some portal versions include a window handle parameter.
++		base := buildGdbusArgs(*appID, *reason)
++		fallback := append(base[:9], append([]string{""}, base[9:]...)...)
++		output, err = exec.Command("gdbus", fallback...).CombinedOutput()
++	}
++
++	if err != nil {
++		if os.IsNotExist(err) {
++			fmt.Fprintln(os.Stderr, "gdbus not found. Install the 'glib2.0-bin' package.")
++			os.Exit(1)
++		}
++		fmt.Fprintln(os.Stderr, "Failed to request inhibit via xdg-desktop-portal.")
++		stderr := strings.TrimSpace(string(output))
++		if stderr != "" {
++			fmt.Fprintln(os.Stderr, stderr)
++		}
++		os.Exit(1)
++	}
++
++	handle := strings.TrimSpace(string(output))
++	fmt.Println("Inhibit active. Press Ctrl+C to release.")
++	if handle != "" {
++		fmt.Printf("Portal handle: %s\n", handle)
++	}
++
++	for {
++		time.Sleep(60 * time.Second)
++	}
++}
+diff --git a/home/dgkim/git/example/nosleep/nosleep-rs/Cargo.toml b/home/dgkim/git/example/nosleep/nosleep-rs/Cargo.toml
+new file mode 100644
+index 0000000..4073316
+--- /dev/null
++++ b/home/dgkim/git/example/nosleep/nosleep-rs/Cargo.toml
+@@ -0,0 +1,6 @@
++[package]
++name = "nosleep"
++version = "0.1.0"
++edition = "2021"
++
++[dependencies]
+diff --git a/home/dgkim/git/example/nosleep/nosleep-rs/src/main.rs b/home/dgkim/git/example/nosleep/nosleep-rs/src/main.rs
+new file mode 100644
+index 0000000..4cd372e
+--- /dev/null
++++ b/home/dgkim/git/example/nosleep/nosleep-rs/src/main.rs
+@@ -0,0 +1,90 @@
++use std::process::{Command, Stdio};
++use std::thread;
++use std::time::Duration;
++
++const PORTAL_DEST: &str = "org.freedesktop.portal.Desktop";
++const PORTAL_PATH: &str = "/org/freedesktop/portal/desktop";
++const PORTAL_IFACE: &str = "org.freedesktop.portal.Inhibit";
++const INHIBIT_IDLE: &str = "8";
++
++fn build_gdbus_args(app_id: &str, reason: &str) -> Vec<String> {
++    let escaped = reason.replace('\'', "\\'");
++    let options = format!("{{'reason': <'{}'>}}", escaped);
++    vec![
++        "call".into(),
++        "--session".into(),
++        "--dest".into(),
++        PORTAL_DEST.into(),
++        "--object-path".into(),
++        PORTAL_PATH.into(),
++        "--method".into(),
++        format!("{}.Inhibit", PORTAL_IFACE),
++        app_id.into(),
++        "".into(),
++        INHIBIT_IDLE.into(),
++        options,
++    ]
++}
++
++fn main() {
++    let mut app_id = "com.example.nosleep".to_string();
++    let mut reason = "Keeping the session awake".to_string();
++
++    let mut args = std::env::args().skip(1);
++    while let Some(arg) = args.next() {
++        match arg.as_str() {
++            "--app-id" => {
++                if let Some(val) = args.next() {
++                    app_id = val;
++                }
++            }
++            "--reason" => {
++                if let Some(val) = args.next() {
++                    reason = val;
++                }
++            }
++            "-h" | "--help" => {
++                println!("Usage: nosleep [--app-id ID] [--reason TEXT]");
++                return;
++            }
++            _ => {}
++        }
++    }
++
++    let gdbus_args = build_gdbus_args(&app_id, &reason);
++    let output = Command::new("gdbus")
++        .args(&gdbus_args)
++        .stdout(Stdio::piped())
++        .stderr(Stdio::piped())
++        .output();
++
++    let output = match output {
++        Ok(out) => out,
++        Err(err) => {
++            if err.kind() == std::io::ErrorKind::NotFound {
++                eprintln!("gdbus not found. Install the 'glib2.0-bin' package.");
++            } else {
++                eprintln!("Failed to run gdbus: {err}");
++            }
++            std::process::exit(1);
++        }
++    };
++
++    if !output.status.success() {
++        eprintln!("Failed to request inhibit via xdg-desktop-portal.");
++        if !output.stderr.is_empty() {
++            eprintln!("{}", String::from_utf8_lossy(&output.stderr).trim());
++        }
++        std::process::exit(output.status.code().unwrap_or(1));
++    }
++
++    let handle = String::from_utf8_lossy(&output.stdout).trim().to_string();
++    println!("Inhibit active. Press Ctrl+C to release.");
++    if !handle.is_empty() {
++        println!("Portal handle: {handle}");
++    }
++
++    loop {
++        thread::sleep(Duration::from_secs(60));
++    }
++}

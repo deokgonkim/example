@@ -1,0 +1,5 @@
+/nosleep
+/nosleep-go
+*.exe
+*.out
+/nosleep-rs/target
