@@ -148,7 +148,7 @@ def main():
     skipped = 0
     kept = 0
 
-    for p in root.rglob("*"):
+    for p in root.iterdir():
         if not p.is_file():
             continue
 
@@ -201,4 +201,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
