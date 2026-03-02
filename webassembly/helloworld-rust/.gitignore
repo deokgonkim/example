@@ -1,0 +1,14 @@
+# Rust build artifacts
+/target
+
+# wasm-pack output
+/pkg
+
+# Node dependencies (if used locally)
+/node_modules
+
+# OS/editor junk
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
