@@ -12,15 +12,37 @@ def to_float(value):
         return None
 
 
-def build_features(csv_path):
+def build_href(row, csv_dir):
+    source = (row.get("SourceFile") or "").strip()
+    if source:
+        source_path = Path(source)
+        if not source_path.is_absolute():
+            source_path = (csv_dir / source_path).resolve()
+        else:
+            source_path = source_path.resolve()
+        return source_path.as_uri()
+    return ""
+
+
+def build_features(csv_path, include_href):
     features = []
     with csv_path.open("r", newline="", encoding="utf-8") as csv_file:
         reader = csv.DictReader(csv_file)
+        csv_dir = csv_path.parent
         for row in reader:
             lat = to_float(row.get("GPSLatitude"))
             lon = to_float(row.get("GPSLongitude"))
             if lat is None or lon is None:
                 continue
+
+            properties = {
+                "make": (row.get("Make") or "").strip(),
+                "model": (row.get("Model") or "").strip(),
+                "longitude": lon,
+                "latitude": lat,
+            }
+            if include_href:
+                properties["href"] = build_href(row, csv_dir)
 
             feature = {
                 "type": "Feature",
@@ -28,12 +50,7 @@ def build_features(csv_path):
                     "type": "Point",
                     "coordinates": [lon, lat],
                 },
-                "properties": {
-                    "make": (row.get("Make") or "").strip(),
-                    "model": (row.get("Model") or "").strip(),
-                    "longitude": lon,
-                    "latitude": lat,
-                },
+                "properties": properties,
             }
             features.append(feature)
     return features
@@ -55,6 +72,11 @@ def main():
         default="camera_locations.geojson",
         help="Output GeoJSON path (default: camera_locations.geojson).",
     )
+    parser.add_argument(
+        "--include-href",
+        action="store_true",
+        help="Include file href in properties using SourceFile as file:// URL.",
+    )
     args = parser.parse_args()
 
     csv_path = Path(args.csv_path).resolve()
@@ -63,7 +85,7 @@ def main():
     if not csv_path.exists():
         raise SystemExit(f"Error: CSV file not found: {csv_path}")
 
-    features = build_features(csv_path)
+    features = build_features(csv_path, include_href=args.include_href)
     geojson = {"type": "FeatureCollection", "features": features}
 
     with output_path.open("w", encoding="utf-8") as out_file:
