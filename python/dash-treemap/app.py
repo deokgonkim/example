@@ -21,8 +21,30 @@ rows = [
 ]
 df = pd.DataFrame(rows, columns=["topic", "keyword", "title", "url", "desc", "weight"])
 
+def filter_data(data: pd.DataFrame, query: str | None) -> pd.DataFrame:
+    if not query:
+        return data
+
+    q = query.strip().lower()
+    if not q:
+        return data
+
+    mask = (
+        data["topic"].str.lower().str.contains(q, na=False)
+        | data["keyword"].str.lower().str.contains(q, na=False)
+        | data["title"].str.lower().str.contains(q, na=False)
+        | data["desc"].str.lower().str.contains(q, na=False)
+        | data["url"].str.lower().str.contains(q, na=False)
+    )
+    return data[mask]
+
 # ---- helper: main treemap ----
 def make_main_treemap(data: pd.DataFrame):
+    if len(data) == 0:
+        fig = px.treemap(pd.DataFrame([{"label": "(no data)", "weight": 1}]), path=["label"], values="weight")
+        fig.update_layout(margin=dict(t=10, l=10, r=10, b=10))
+        return fig
+
     fig = px.treemap(
         data,
         path=["topic", "keyword", "title"],
@@ -61,7 +83,7 @@ def make_detail_treemap(data: pd.DataFrame, selected_topic=None, selected_keywor
     fig.update_layout(title=title, margin=dict(t=40, l=10, r=10, b=10))
     return fig
 
-def parse_click(clickData):
+def parse_click(data: pd.DataFrame, clickData):
     """
     Plotly treemap clickData에서 label/parent 등을 뽑아
     topic/keyword를 최대한 추정.
@@ -79,15 +101,19 @@ def parse_click(clickData):
     # - label이 topic 컬럼에 있으면 topic
     # - label이 keyword 컬럼에 있으면 keyword
     # - label이 title 컬럼에 있으면 title (그때 parent를 keyword로 보고 keyword 추정)
-    topic = label if label in set(df["topic"]) else None
-    keyword = label if label in set(df["keyword"]) else None
+    topics = set(data["topic"])
+    keywords = set(data["keyword"])
+    titles = set(data["title"])
 
-    if label in set(df["title"]):
+    topic = label if label in topics else None
+    keyword = label if label in keywords else None
+
+    if label in titles:
         # title이면 parent가 keyword일 가능성이 높음
-        if parent in set(df["keyword"]):
+        if parent in keywords:
             keyword = parent
         # parent가 topic일 수도 있으니 topic도 보조로 추정
-        if parent in set(df["topic"]):
+        if parent in topics:
             topic = parent
 
     return topic, keyword
@@ -101,6 +127,13 @@ app.layout = html.Div(
         html.Div(
             children=[
                 html.H3("Main Treemap (overview)"),
+                dcc.Input(
+                    id="search-input",
+                    type="text",
+                    placeholder="Search topic / keyword / title / desc / url",
+                    debounce=True,
+                    style={"width": "100%", "marginBottom": "8px", "padding": "8px"},
+                ),
                 dcc.Graph(
                     id="main-treemap",
                     figure=make_main_treemap(df),
@@ -150,26 +183,39 @@ app.layout = html.Div(
 )
 
 @app.callback(
+    Output("main-treemap", "figure"),
+    Input("search-input", "value"),
+)
+def update_main_treemap(search_query):
+    filtered = filter_data(df, search_query)
+    return make_main_treemap(filtered)
+
+@app.callback(
     Output("detail-treemap", "figure"),
     Output("detail-table", "data"),
     Output("selection", "children"),
     Input("main-treemap", "clickData"),
+    Input("search-input", "value"),
 )
-def drillthrough(clickData):
-    topic, keyword = parse_click(clickData)
+def drillthrough(clickData, search_query):
+    filtered_df = filter_data(df, search_query)
+    topic, keyword = parse_click(filtered_df, clickData)
 
     if keyword:
-        filtered = df[df["keyword"] == keyword].sort_values("weight", ascending=False)
-        fig = make_detail_treemap(df, selected_keyword=keyword)
+        filtered = filtered_df[filtered_df["keyword"] == keyword].sort_values("weight", ascending=False)
+        fig = make_detail_treemap(filtered_df, selected_keyword=keyword)
         sel = f"selected keyword: {keyword}"
     elif topic:
-        filtered = df[df["topic"] == topic].sort_values("weight", ascending=False)
-        fig = make_detail_treemap(df, selected_topic=topic)
+        filtered = filtered_df[filtered_df["topic"] == topic].sort_values("weight", ascending=False)
+        fig = make_detail_treemap(filtered_df, selected_topic=topic)
         sel = f"selected topic: {topic}"
     else:
-        filtered = df.sort_values(["topic", "keyword", "weight"], ascending=[True, True, False]).head(50)
-        fig = make_detail_treemap(df)
+        filtered = filtered_df.sort_values(["topic", "keyword", "weight"], ascending=[True, True, False]).head(50)
+        fig = make_detail_treemap(filtered_df)
         sel = "selected: (none)"
+
+    if search_query and search_query.strip():
+        sel = f"{sel} | search: {search_query.strip()}"
 
     # DataTable에서 url을 markdown 링크로 렌더링
     data = filtered.copy()
@@ -178,4 +224,3 @@ def drillthrough(clickData):
 
 if __name__ == "__main__":
     app.run(debug=True)
-
