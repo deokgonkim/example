@@ -1,6 +1,7 @@
 import argparse
 import json
 from collections import defaultdict
+from datetime import datetime, timedelta, timezone
 from urllib.parse import parse_qs, urlparse
 
 import plotly.express as px
@@ -28,6 +29,52 @@ def parse_channel_id(channel_url):
 def load_watch_history(path):
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
+
+
+def parse_item_time(value):
+    return datetime.fromisoformat(value.replace("Z", "+00:00"))
+
+
+def parse_user_datetime(value, is_until):
+    if not value:
+        return None
+
+    # Date-only input: inclusive day range in UTC.
+    if len(value) == 10:
+        dt = datetime.fromisoformat(value).replace(tzinfo=timezone.utc)
+        if is_until:
+            return dt + timedelta(days=1) - timedelta(microseconds=1)
+        return dt
+
+    dt = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt
+
+
+def filter_history_by_time(history_items, since, until):
+    since_dt = parse_user_datetime(since, is_until=False)
+    until_dt = parse_user_datetime(until, is_until=True)
+    if not since_dt and not until_dt:
+        return history_items
+
+    filtered = []
+    for item in history_items:
+        raw_time = item.get("time")
+        if not raw_time:
+            continue
+        try:
+            item_time = parse_item_time(raw_time)
+        except Exception:
+            continue
+
+        if since_dt and item_time < since_dt:
+            continue
+        if until_dt and item_time > until_dt:
+            continue
+        filtered.append(item)
+
+    return filtered
 
 
 def build_chart_data(history_items):
@@ -79,16 +126,18 @@ def create_treemap(rows, title):
         path=["group", "channel"],
         values="weight",
         color="watch_count",
+        custom_data=["channel_id"],
         color_continuous_scale="Greens",
-        hover_data={
-            "watch_count": ":,",
-            "channel_id": True,
-            "weight": False,
-        },
     )
 
     fig.update_traces(
-        texttemplate="<b>%{label}</b><br>%{customdata[0]:,} views",
+        texttemplate="<b>%{label}</b><br>%{value:,.0f} views",
+        hovertemplate=(
+            "label=%{label}<br>"
+            "parent=%{parent}<br>"
+            "watch_count=%{value:,.0f}<br>"
+            "channel_id=%{customdata[0]}<extra></extra>"
+        ),
         marker_line_color="white",
         marker_line_width=1,
         root_color="white",
@@ -123,6 +172,16 @@ def parse_args():
         default=0,
         help="Only keep top N channels by watch count (0 = all)",
     )
+    parser.add_argument(
+        "--since",
+        default="",
+        help="Include entries on/after this time (YYYY-MM-DD or ISO8601, UTC if no timezone)",
+    )
+    parser.add_argument(
+        "--until",
+        default="",
+        help="Include entries on/before this time (YYYY-MM-DD or ISO8601, UTC if no timezone)",
+    )
     return parser.parse_args()
 
 
@@ -130,6 +189,9 @@ def main():
     args = parse_args()
     history_items = load_watch_history(args.input)
     print(f"Loaded {len(history_items)} watch history entries from: {args.input}")
+
+    history_items = filter_history_by_time(history_items, args.since, args.until)
+    print(f"After time filter: {len(history_items)} entries")
 
     rows = build_chart_data(history_items)
     print(f"Aggregated into {len(rows)} channels")
