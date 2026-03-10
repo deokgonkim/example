@@ -116,8 +116,9 @@ def format_date_range(history_items):
     return f"{start_date} to {end_date}"
 
 
-def build_chart_title(base_title, history_items):
-    return f"{base_title} ({format_date_range(history_items)})"
+def build_chart_title(base_title, history_items, rows):
+    total_views = sum(row["watch_count"] for row in rows)
+    return f"{base_title} ({format_date_range(history_items)}, {total_views:,} total views)"
 
 
 def get_leaf_name(item, channel_name):
@@ -274,7 +275,7 @@ def main():
         rows = rows[: args.top_n]
         print(f"Using top {len(rows)} leaves")
 
-    fig = create_treemap(rows, build_chart_title(args.title, history_items))
+    fig = create_treemap(rows, build_chart_title(args.title, history_items, rows))
     fig.write_html(args.output_html)
     print(f"Saved interactive treemap HTML to: {args.output_html}")
 
