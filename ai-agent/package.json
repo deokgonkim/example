@@ -1,0 +1,22 @@
+{
+  "name": "minimal-ai-agent",
+  "version": "1.0.0",
+  "description": "Minimal JavaScript AI agent with Ollama, HTTP fetch, Telegram, and cron support.",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "keywords": [
+    "ai-agent",
+    "ollama",
+    "telegram",
+    "cron"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "node-cron": "^4.0.5",
+    "node-telegram-bot-api": "^0.66.0"
+  }
+}
