@@ -1,0 +1,56 @@
+service: rmovie
+useDotenv: true
+
+frameworkVersion: "3"
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  region: ${env:AWS_REGION}
+  stage: ${opt:stage, 'dev'}
+  deploymentBucket:
+    # Name of an existing bucket to use (default: created by serverless)
+    name: ${env:DEPLOYMENT_BUCKET}
+    # On deployment, serverless prunes artifacts older than this limit (default: 5)
+    maxPreviousDeploymentArtifacts: 5
+    # Prevents public access via ACLs or bucket policies (default: false)
+    # Note: the deployment bucket is not public by default. These are additional ACLs.
+    blockPublicAccess: true
+    # Skip the creation of a default bucket policy when the deployment bucket is created (default: false)
+    # skipPolicySetup: true
+    # Enable bucket versioning (default: false)
+    # versioning: true
+    # Server-side encryption method
+    serverSideEncryption: AES256
+    # For server-side encryption
+    # sseKMSKeyId: arn:aws:kms:us-east-1:xxxxxxxxxxxx:key/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa
+    # For server-side encryption with custom keys
+    # sseCustomerAlgorithim: AES256
+    # sseCustomerKey: string
+    # sseCustomerKeyMD5: md5sum
+  tracing:
+    lambda: true
+    apiGateway: true
+
+  environment:
+    GOOGLE_CREDENTIALS_FILE: ${env:GOOGLE_CREDENTIALS_FILE, ''}
+    GOOGLE_SERVICE_ACCOUNT_JSON: ${env:GOOGLE_SERVICE_ACCOUNT_JSON, ''}
+    GOOGLE_SHEETS_SPREADSHEET_ID: ${env:GOOGLE_SHEETS_SPREADSHEET_ID}
+    GOOGLE_SHEETS_RANGE: ${env:GOOGLE_SHEETS_RANGE, 'Sheet1'}
+
+functions:
+  app:
+    handler: src/handler.main
+    timeout: 10
+    events:
+      - httpApi:
+          path: /
+          method: get
+
+package:
+  patterns:
+    - src/**
+    - service-account.json
+    - config/**
+    - package.json
+    - serverless.yml

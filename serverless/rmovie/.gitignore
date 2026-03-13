@@ -1,0 +1,11 @@
+node_modules/
+.serverless/
+
+# Keep Google credentials out of source control.
+service-account.json
+config/*.json
+
+# dotenv
+.env.prod
+.env.dev
+.env

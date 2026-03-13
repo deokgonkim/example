@@ -1,0 +1,20 @@
+{
+  "name": "rmovie",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Serverless random redirect app backed by Google Sheets",
+  "scripts": {
+    "deploy": "serverless deploy -s prod",
+    "remove": "serverless remove -s prod",
+    "invoke:local": "serverless invoke local --function app"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "googleapis": "^150.0.1"
+  },
+  "devDependencies": {
+    "serverless": "^3.21.0"
+  }
+}
