@@ -1,5 +1,6 @@
 'use strict';
 
+const { randomInt } = require('node:crypto');
 const fs = require('node:fs/promises');
 const path = require('node:path');
 const { google } = require('googleapis');
@@ -37,7 +38,7 @@ function rowsToObjects(rows) {
 }
 
 function pickRandom(items) {
-  const randomIndex = Math.floor(Math.random() * items.length);
+  const randomIndex = randomInt(items.length);
   return items[randomIndex];
 }
 
