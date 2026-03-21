@@ -1,0 +1,7 @@
+{
+  "name": "youtube-video-export-devtools",
+  "private": true,
+  "scripts": {
+    "treemap": "node generate-marketcap-treemap.js"
+  }
+}

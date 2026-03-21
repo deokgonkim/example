@@ -56,8 +56,45 @@ YouTube 페이지에서 **브라우저 개발자도구(Console)** 를 이용해
 
 ```
 ├── README.md  
+├── generate-marketcap-treemap.js
+├── package.json
 └── youtube-export.js
 ```
+
+---
+
+## 🌳 Treemap Generator
+
+`youtube_videos.json` 을 기준으로 채널별 영상 개수를 집계해 treemap HTML을 생성할 수 있습니다.
+
+특징:
+
+- 채널별 영상 개수를 tile 면적으로 사용
+- `channelName` 이 `Unknown` 인 항목은 제외
+- 채널 페이지의 `og:image` 를 읽어 channel logo를 tile 이미지로 사용
+- 결과물을 단일 HTML 파일로 생성
+
+실행:
+
+```bash
+npm run treemap
+```
+
+또는:
+
+```bash
+node generate-marketcap-treemap.js youtube_videos.json marketcap-treemap.html
+```
+
+출력:
+
+- `marketcap-treemap.html`
+
+주의:
+
+- 현재 JSON에는 market cap 필드가 없으므로, treemap 크기는 **채널별 영상 개수**를 사용합니다
+- channel logo는 실행 시 네트워크로 채널 페이지를 조회해 가져옵니다
+- 네트워크가 막힌 환경에서는 logo 조회가 실패할 수 있으며, 이 경우 이미지가 비어 보일 수 있습니다
 
 ---
 
@@ -98,4 +135,3 @@ which analyzed YouTube DOM structures and selector patterns.
 - DOM reverse-engineering via browser DevTools
 - Selector design for both legacy and modern YouTube layouts
 - Data extraction strategy (scroll + parse)
-
