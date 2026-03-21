@@ -5,7 +5,7 @@ const path = require("path");
 
 const INPUT_PATH = path.resolve(process.argv[2] || "youtube_videos.json");
 const OUTPUT_PATH = path.resolve(process.argv[3] || "marketcap-treemap.html");
-const TITLE = "YouTube Channel Marketcap Treemap";
+const TITLE = "YouTube Channel Treemap";
 
 function escapeHtml(value) {
   return String(value ?? "")
@@ -259,10 +259,10 @@ async function enrichWithLogos(entries) {
 function buildHtml(layout, generatedAt, sourceFile) {
   const tiles = layout.map((item) => {
     const style = [
-      `left:${item.x.toFixed(2)}px`,
-      `top:${item.y.toFixed(2)}px`,
-      `width:${Math.max(0, item.width - 6).toFixed(2)}px`,
-      `height:${Math.max(0, item.height - 6).toFixed(2)}px`,
+      `left:${((item.x / 1400) * 100).toFixed(4)}%`,
+      `top:${((item.y / 900) * 100).toFixed(4)}%`,
+      `width:${((item.width / 1400) * 100).toFixed(4)}%`,
+      `height:${((item.height / 900) * 100).toFixed(4)}%`,
     ].filter(Boolean).join(";");
 
     return `
@@ -403,7 +403,6 @@ function buildHtml(layout, generatedAt, sourceFile) {
       min-height: 0;
       background: rgba(255, 250, 242, 0.48);
       border-radius: 20px;
-      padding: 3px;
       overflow: hidden;
       box-shadow: 0 20px 70px rgba(55, 38, 12, 0.14);
       border: 1px solid rgba(30, 29, 26, 0.12);
@@ -413,7 +412,8 @@ function buildHtml(layout, generatedAt, sourceFile) {
       position: absolute;
       display: block;
       overflow: hidden;
-      border-radius: 18px;
+      border-radius: 16px;
+      border: 3px solid rgba(255, 250, 242, 0.82);
       color: #fffdf7;
       text-decoration: none;
       background:
