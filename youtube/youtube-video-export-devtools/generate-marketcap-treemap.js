@@ -299,6 +299,7 @@ function buildHtml(layout, generatedAt, sourceFile) {
 
     body {
       margin: 0;
+      min-height: 100vh;
       font-family: Georgia, "Times New Roman", serif;
       color: var(--ink);
       background:
@@ -308,17 +309,20 @@ function buildHtml(layout, generatedAt, sourceFile) {
     }
 
     .page {
-      max-width: 1500px;
+      width: min(1920px, 100vw);
+      height: 100vh;
       margin: 0 auto;
-      padding: 28px;
+      padding: 18px 20px 14px;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      gap: 12px;
     }
 
     .header {
       display: grid;
       grid-template-columns: 1.4fr 1fr;
-      gap: 20px;
+      gap: 14px;
       align-items: end;
-      margin-bottom: 20px;
     }
 
     .eyebrow {
@@ -331,8 +335,8 @@ function buildHtml(layout, generatedAt, sourceFile) {
 
     h1 {
       margin: 0;
-      font-size: clamp(32px, 6vw, 72px);
-      line-height: 0.94;
+      font-size: clamp(28px, 3.8vw, 58px);
+      line-height: 0.92;
       letter-spacing: -0.04em;
       font-weight: 700;
     }
@@ -341,7 +345,7 @@ function buildHtml(layout, generatedAt, sourceFile) {
       background: rgba(255, 250, 242, 0.78);
       border: 1px solid rgba(30, 29, 26, 0.12);
       border-radius: 18px;
-      padding: 18px 20px;
+      padding: 14px 16px;
       backdrop-filter: blur(10px);
     }
 
@@ -349,30 +353,56 @@ function buildHtml(layout, generatedAt, sourceFile) {
     .footer p {
       margin: 0;
       color: var(--muted);
-      line-height: 1.5;
-      font-size: 14px;
+      line-height: 1.35;
+      font-size: 13px;
     }
 
     .stats {
       display: flex;
-      gap: 18px;
+      gap: 14px;
       flex-wrap: wrap;
-      margin-top: 12px;
-      font-size: 14px;
+      margin-top: 10px;
+      font-size: 13px;
     }
 
     .stats strong {
       display: block;
-      font-size: 20px;
+      font-size: 18px;
       color: var(--ink);
+    }
+
+    .controls {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin: 10px 0 0;
+    }
+
+    .toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(30, 29, 26, 0.12);
+      background: rgba(255, 255, 255, 0.58);
+      color: var(--ink);
+      font-size: 13px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .toggle input {
+      margin: 0;
+      accent-color: var(--accent);
     }
 
     .treemap {
       position: relative;
-      height: min(76vh, 980px);
-      min-height: 640px;
+      height: 100%;
+      min-height: 0;
       background: rgba(255, 250, 242, 0.48);
-      border-radius: 24px;
+      border-radius: 20px;
       padding: 3px;
       overflow: hidden;
       box-shadow: 0 20px 70px rgba(55, 38, 12, 0.14);
@@ -447,23 +477,35 @@ function buildHtml(layout, generatedAt, sourceFile) {
       opacity: 0.96;
     }
 
-    .tile__meta {
-      font-size: clamp(10px, 0.86vw, 13px);
-      opacity: 0.74;
+    body.hide-names .tile__name {
+      display: none;
+    }
+
+    body.hide-counts .tile__stats {
+      display: none;
+    }
+
+    body.hide-names.hide-counts .tile__shade {
+      background:
+        linear-gradient(180deg, rgba(0, 0, 0, 0.02) 0%, rgba(0, 0, 0, 0.16) 100%),
+        linear-gradient(135deg, rgba(255, 255, 255, 0.02), rgba(0, 0, 0, 0.12));
     }
 
     .footer {
       display: flex;
       justify-content: space-between;
-      gap: 18px;
+      gap: 12px;
       flex-wrap: wrap;
-      margin-top: 16px;
       padding: 0 4px;
     }
 
     @media (max-width: 900px) {
       .page {
+        width: 100%;
+        height: auto;
+        min-height: 100vh;
         padding: 16px;
+        grid-template-rows: auto auto auto;
       }
 
       .header {
@@ -494,6 +536,16 @@ function buildHtml(layout, generatedAt, sourceFile) {
           <span><strong>${escapeHtml(formatViewsExact(layout.reduce((sum, item) => sum + item.videos, 0)))}</strong>videos</span>
           <span><strong>${escapeHtml(formatViewsExact(layout.reduce((sum, item) => sum + item.totalViews, 0)))}</strong>parsed views</span>
         </div>
+        <div class="controls">
+          <label class="toggle">
+            <input id="toggle-names" type="checkbox" checked>
+            <span>Show channel names</span>
+          </label>
+          <label class="toggle">
+            <input id="toggle-counts" type="checkbox" checked>
+            <span>Show video counts</span>
+          </label>
+        </div>
       </div>
     </section>
 
@@ -506,6 +558,19 @@ function buildHtml(layout, generatedAt, sourceFile) {
       <p>Generated: ${escapeHtml(generatedAt)}</p>
     </section>
   </main>
+  <script>
+    const toggleNames = document.getElementById("toggle-names");
+    const toggleCounts = document.getElementById("toggle-counts");
+
+    function syncToggles() {
+      document.body.classList.toggle("hide-names", !toggleNames.checked);
+      document.body.classList.toggle("hide-counts", !toggleCounts.checked);
+    }
+
+    toggleNames.addEventListener("change", syncToggles);
+    toggleCounts.addEventListener("change", syncToggles);
+    syncToggles();
+  </script>
 </body>
 </html>`;
 }
