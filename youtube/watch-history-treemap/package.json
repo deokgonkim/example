@@ -1,0 +1,12 @@
+{
+  "name": "watch-history-treemap",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:video": "node scripts/generate-video-treemap.mjs",
+    "build:channel": "node scripts/generate-channel-treemap.mjs",
+    "build:tui": "node scripts/generate-treemap-tui.mjs",
+    "build": "node scripts/generate-video-treemap.mjs && node scripts/generate-channel-treemap.mjs"
+  }
+}
