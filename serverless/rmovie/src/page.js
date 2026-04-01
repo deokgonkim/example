@@ -105,7 +105,7 @@ function createHtml({ name, url }) {
   </head>
   <body>
     <main>
-      <p class="status" id="status">Redirecting in 2 seconds.</p>
+      <p class="status" id="status">Redirecting in 4 seconds.</p>
       <h1>${escapedName}</h1>
       <p><a href="${escapedUrl}" rel="noreferrer">${escapedUrl}</a></p>
       <div class="actions">
@@ -119,7 +119,7 @@ function createHtml({ name, url }) {
       const stopButton = document.getElementById('stop-button');
       let redirectTimer = window.setTimeout(function redirectToUrl() {
         window.location.href = targetUrl;
-      }, 2000);
+      }, 4000);
 
       stopButton.addEventListener('click', function stopRedirect() {
         if (redirectTimer !== null) {
