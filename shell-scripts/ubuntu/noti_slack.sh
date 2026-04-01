@@ -20,19 +20,44 @@ SLACK_TOKEN="xoxb-[redacted]-[redacted]-[redacted]"
 SLACK_CHANNEL=general
 
 
-PAYLOAD=$(echo "
+NOW=$(date '+%Y-%m-%d %H:%M:%S')
+#SYS_INFO=$(uname -snrmo)
+SYS_INFO=$(uname -mo)
+
+PAYLOAD=$(cat <<EOF
 {
-    \"channel\": \"$SLACK_CHANNEL\",
-    \"text\": \"${PAM_USER} is trying to access ssh on ${HOSTNAME}\n
-A SSH login was successful, so here are some information for security:\n
-User:        $PAM_USER\n
-User IP Host: $PAM_RHOST\n
-Service:     $PAM_SERVICE\n
-TTY:         $PAM_TTY\n
-Date:        `date`\n
-Server:      `uname -a`\"
+  "channel": "$SLACK_CHANNEL",
+  "text": "🔐 ${HOSTNAME} *SSH Login Notification*",
+  "blocks": [
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "*${HOSTNAME}* | New SSH login detected"
+      }
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "section",
+      "fields": [
+        { "type": "mrkdwn", "text": "*User:* \`$PAM_USER\`" },
+        { "type": "mrkdwn", "text": "*Source IP:* \`$PAM_RHOST\`" },
+        { "type": "mrkdwn", "text": "*Service:* \`$PAM_SERVICE\`" },
+        { "type": "mrkdwn", "text": "*TTY:* \`$PAM_TTY\`" }
+      ]
+    },
+    {
+      "type": "context",
+      "elements": [
+        { "type": "mrkdwn", "text": "📅 *Time:* $NOW  |  💻 *System:* $SYS_INFO" }
+      ]
+    }
+  ]
 }
-" | tr '\n' ' ')
+EOF
+)
 
 if [ "x${PAM_TYPE}" = "xopen_session" ]; then
 	curl -H "Content-Type: application/json" -H "Authorization: Bearer ${SLACK_TOKEN}" -X POST $SLACK_URL -d"$PAYLOAD"
