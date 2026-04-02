@@ -1,0 +1,11 @@
+# Build output
+web-ca
+simplest-web-ca
+
+# CA data (keys, issued certs — never commit private keys)
+data/
+
+# Go
+*.test
+*.out
+vendor/

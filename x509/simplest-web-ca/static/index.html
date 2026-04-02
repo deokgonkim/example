@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Simplest Web CA</title>
+  <script src="https://cdn.jsdelivr.net/npm/node-forge@1.3.1/dist/forge.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, sans-serif; background: #f5f7fa; color: #1a1a2e; min-height: 100vh; }
+    header { background: #16213e; color: #e2e8f0; padding: 1.2rem 2rem; display: flex; align-items: center; gap: 1rem; }
+    header h1 { font-size: 1.3rem; font-weight: 600; }
+    header span { font-size: 0.8rem; opacity: 0.6; }
+    main { max-width: 700px; margin: 2.5rem auto; padding: 0 1rem; }
+
+    .tabs { display: flex; gap: 0; border-bottom: 2px solid #cbd5e1; margin-bottom: 1.5rem; }
+    .tab-btn { padding: 0.65rem 1.4rem; border: none; background: none; cursor: pointer; font-size: 0.95rem;
+               color: #64748b; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all 0.15s; }
+    .tab-btn.active { color: #2563eb; border-bottom-color: #2563eb; font-weight: 600; }
+    .tab-btn:hover:not(.active) { color: #1e40af; }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    .card { background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,.07); padding: 1.8rem; }
+    .card h2 { font-size: 1rem; font-weight: 600; margin-bottom: 0.4rem; color: #0f172a; }
+    .card p.desc { font-size: 0.85rem; color: #64748b; margin-bottom: 1.3rem; line-height: 1.5; }
+
+    label { display: block; font-size: 0.85rem; font-weight: 500; margin-bottom: 0.3rem; color: #374151; }
+    input[type=email], input[type=password], input[type=file], textarea {
+      width: 100%; padding: 0.55rem 0.8rem; border: 1px solid #d1d5db; border-radius: 6px;
+      font-size: 0.9rem; transition: border-color 0.15s; background: #fafafa;
+    }
+    input[type=email]:focus, input[type=password]:focus, textarea:focus { outline: none; border-color: #2563eb; background: #fff; }
+    input[type=file] { padding: 0.4rem 0.6rem; cursor: pointer; }
+
+    .btn { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.6rem 1.3rem;
+           border: none; border-radius: 6px; font-size: 0.9rem; font-weight: 500;
+           cursor: pointer; transition: background 0.15s, opacity 0.15s; }
+    .btn-primary { background: #2563eb; color: #fff; }
+    .btn-primary:hover { background: #1d4ed8; }
+    .btn-secondary { background: #e2e8f0; color: #334155; }
+    .btn-secondary:hover { background: #cbd5e1; }
+    .btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+    .actions { display: flex; gap: 0.7rem; margin-top: 1.2rem; flex-wrap: wrap; }
+
+    .status { margin-top: 1rem; font-size: 0.85rem; padding: 0.6rem 0.9rem; border-radius: 6px; display: none; }
+    .status.info { display: block; background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+    .status.success { display: block; background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+    .status.error { display: block; background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+
+    /* Step progress */
+    .steps { display: none; flex-direction: column; gap: 0; margin-top: 1.2rem;
+             border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; }
+    .steps.visible { display: flex; }
+    .step { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.65rem 1rem;
+            font-size: 0.85rem; color: #94a3b8; background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0; transition: background 0.25s, color 0.25s; }
+    .step:last-child { border-bottom: none; }
+    .step.active { background: #eff6ff; color: #1d4ed8; font-weight: 500; }
+    .step.done   { background: #fff; color: #166534; }
+    .step.error  { background: #fef2f2; color: #b91c1c; }
+    .step-icon { width: 20px; flex-shrink: 0; text-align: center; margin-top: 1px; font-size: 0.9rem; }
+    .step-body { flex: 1; }
+    .step-label { line-height: 1.4; }
+    .step-note { font-size: 0.75rem; color: #64748b; margin-top: 0.15rem; }
+    .step.active .step-note { color: #3b82f6; }
+
+    /* Browser import guide */
+    .import-guide { margin-top: 0; }
+    .guide-title { font-size: 0.9rem; font-weight: 600; color: #0f172a; margin-bottom: 0.8rem; }
+    .guide-tabs { display: flex; gap: 0; border-bottom: 1px solid #e2e8f0; margin-bottom: 0; }
+    .guide-tab { padding: 0.45rem 1rem; border: none; background: none; cursor: pointer;
+                 font-size: 0.82rem; color: #64748b; border-bottom: 2px solid transparent;
+                 margin-bottom: -1px; transition: all 0.15s; }
+    .guide-tab.active { color: #2563eb; border-bottom-color: #2563eb; font-weight: 600; }
+    .guide-panel { display: none; padding: 1rem 0 0; }
+    .guide-panel.active { display: block; }
+    .guide-panel ol { padding-left: 1.3rem; font-size: 0.84rem; line-height: 1.7; color: #334155; }
+    .guide-panel li { margin-bottom: 0.15rem; }
+    .guide-note { margin-top: 0.75rem; font-size: 0.8rem; color: #475569;
+                  background: #f8fafc; border-left: 3px solid #94a3b8;
+                  padding: 0.45rem 0.7rem; border-radius: 0 4px 4px 0; }
+
+    .divider { border: none; border-top: 1px solid #e2e8f0; margin: 1.3rem 0; }
+
+    .ca-section { margin-top: 1.5rem; }
+    .ca-section h3 { font-size: 0.85rem; font-weight: 600; color: #64748b; text-transform: uppercase;
+                     letter-spacing: 0.05em; margin-bottom: 0.7rem; }
+    .ca-download-btn { font-size: 0.8rem; padding: 0.4rem 0.9rem; }
+
+    #cert-list { margin-top: 1.5rem; }
+    #cert-list h3 { font-size: 0.85rem; font-weight: 600; color: #64748b; text-transform: uppercase;
+                    letter-spacing: 0.05em; margin-bottom: 0.8rem; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
+    th { text-align: left; padding: 0.45rem 0.6rem; background: #f8fafc; color: #475569;
+         font-weight: 600; border-bottom: 2px solid #e2e8f0; }
+    td { padding: 0.45rem 0.6rem; border-bottom: 1px solid #f1f5f9; color: #334155; }
+    tr:last-child td { border-bottom: none; }
+    .empty { color: #94a3b8; font-style: italic; font-size: 0.83rem; padding: 0.5rem 0; }
+
+    .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid currentColor;
+               border-top-color: transparent; border-radius: 50%; animation: spin 0.6s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+<header>
+  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+  </svg>
+  <h1>Simplest Web CA</h1>
+  <span>S/MIME Certificate Authority</span>
+</header>
+
+<main>
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="generate">🔑 Generate &amp; Request</button>
+    <button class="tab-btn" data-tab="upload">📤 Upload CSR</button>
+    <button class="tab-btn" data-tab="issued">📋 Issued Certs</button>
+  </div>
+
+  <!-- TAB 1: Generate & Request -->
+  <div class="tab-panel active" id="tab-generate">
+    <div class="card">
+      <h2>Request S/MIME Certificate</h2>
+      <p class="desc">
+        Your RSA-2048 key pair is generated <strong>in your browser</strong> — the private key never leaves your device.
+        The signed certificate is installed directly into your browser's certificate store.
+      </p>
+
+      <label for="email">Email Address</label>
+      <input type="email" id="email" placeholder="you@example.com" autocomplete="email" style="margin-bottom:0.9rem" />
+
+      <label for="p12-password">
+        .p12 Password
+        <span style="font-weight:400;color:#94a3b8;font-size:0.8rem">(recommended — required by some browsers)</span>
+      </label>
+      <input type="password" id="p12-password" placeholder="Leave blank for no password" autocomplete="new-password" />
+
+      <div class="actions">
+        <button class="btn btn-primary" id="btn-generate">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          Install Certificate in Browser
+        </button>
+      </div>
+
+      <!-- Step-by-step progress -->
+      <div class="steps" id="gen-steps">
+        <div class="step" id="step-keygen">
+          <div class="step-icon">⏳</div>
+          <div class="step-body">
+            <div class="step-label">Generating RSA-2048 key pair</div>
+            <div class="step-note">Running in your browser via WebCrypto API — private key never leaves this device</div>
+          </div>
+        </div>
+        <div class="step" id="step-csr">
+          <div class="step-icon">⏳</div>
+          <div class="step-body">
+            <div class="step-label">Building Certificate Signing Request (CSR)</div>
+            <div class="step-note">Encoding your email as Subject CN and SAN rfc822Name</div>
+          </div>
+        </div>
+        <div class="step" id="step-sign">
+          <div class="step-icon">⏳</div>
+          <div class="step-body">
+            <div class="step-label">Sending CSR to CA for signing</div>
+            <div class="step-note">Only the CSR (public key + email) is sent — no private key</div>
+          </div>
+        </div>
+        <div class="step" id="step-p12">
+          <div class="step-icon">⏳</div>
+          <div class="step-body">
+            <div class="step-label">Installing certificate into browser</div>
+            <div class="step-note">Assembling PKCS#12 bundle and opening the browser's certificate import dialog</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="status" id="gen-status"></div>
+
+      <hr class="divider" />
+
+      <!-- Browser import instructions (revealed after download) -->
+      <div class="import-guide" id="import-guide" style="display:none">
+        <h3 class="guide-title">📥 How to import your certificate</h3>
+
+        <div class="guide-tabs">
+          <button class="guide-tab active" data-browser="chrome">Chrome / Edge</button>
+          <button class="guide-tab" data-browser="firefox">Firefox</button>
+          <button class="guide-tab" data-browser="safari">Safari / macOS</button>
+        </div>
+
+        <div class="guide-panel active" id="guide-chrome">
+          <ol>
+            <li>A system dialog should have opened automatically. Complete the import wizard.</li>
+            <li>If no dialog appeared, use the <strong>save as file</strong> fallback link above, then open <strong>chrome://settings/certificates</strong> → <em>Your certificates</em> → <strong>Import…</strong></li>
+          </ol>
+          <p class="guide-note">💡 Chrome and Edge on Windows/macOS use the OS certificate store. The dialog is the Windows Certificate Import Wizard or macOS Keychain Access.</p>
+        </div>
+
+        <div class="guide-panel" id="guide-firefox">
+          <ol>
+            <li>Firefox should have opened a <strong>"Password for Certificate Backup"</strong> dialog — enter the password you set (or leave blank).</li>
+            <li>Click <strong>OK</strong>. Firefox will confirm the import with a success dialog.</li>
+            <li>You can verify it in <strong>about:preferences#privacy</strong> → <em>View Certificates…</em> → <em>Your Certificates</em>.</li>
+          </ol>
+          <p class="guide-note">💡 Firefox handles <code>application/x-pkcs12</code> natively and imports it directly into its own certificate store.</p>
+        </div>
+
+        <div class="guide-panel" id="guide-safari">
+          <ol>
+            <li>Safari/macOS should have opened <strong>Keychain Access</strong> automatically.</li>
+            <li>Choose the <strong>login</strong> keychain and click <strong>Add</strong>. Enter the password if prompted.</li>
+            <li>The certificate appears under <em>My Certificates</em> in Keychain Access.</li>
+          </ol>
+          <p class="guide-note">💡 macOS Keychain is shared between Safari, Chrome and Edge.</p>
+        </div>
+
+        <hr class="divider" />
+      </div>
+
+      <div class="ca-section">
+        <h3>Trust the CA First</h3>
+        <p class="desc" style="margin-bottom:0.7rem">
+          Install the CA certificate in your browser / OS trust store so certificates issued here are recognized as valid.
+          Do this <strong>before</strong> importing your personal certificate.
+        </p>
+        <a href="/ca-cert" download="ca.crt" class="btn btn-secondary ca-download-btn">
+          ⬇ Download CA Certificate
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 2: Upload CSR -->
+  <div class="tab-panel" id="tab-upload">
+    <div class="card">
+      <h2>Sign an Existing CSR</h2>
+      <p class="desc">
+        Upload a PKCS#10 CSR file (<code>.pem</code> or <code>.csr</code>).
+        The CA will sign it and return a <code>cert.pem</code> file.
+      </p>
+
+      <label for="csr-file">CSR File (.pem / .csr)</label>
+      <input type="file" id="csr-file" accept=".pem,.csr,.txt" />
+
+      <div class="actions">
+        <button class="btn btn-primary" id="btn-upload">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+          Sign CSR
+        </button>
+      </div>
+
+      <div class="status" id="upload-status"></div>
+    </div>
+  </div>
+
+  <!-- TAB 3: Issued Certs -->
+  <div class="tab-panel" id="tab-issued">
+    <div class="card">
+      <div id="cert-list">
+        <h3>Issued Certificates</h3>
+        <div id="cert-table-wrap"><p class="empty">Loading…</p></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+// ── Tab switching ────────────────────────────────────────────────────────────
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    if (btn.dataset.tab === 'issued') loadCerts();
+  });
+});
+
+// ── Status helpers ───────────────────────────────────────────────────────────
+function setStatus(el, type, html) {
+  el.className = 'status ' + type;
+  el.innerHTML = html;
+}
+function clearStatus(el) { el.className = 'status'; el.textContent = ''; }
+
+// ── Download helper ──────────────────────────────────────────────────────────
+function triggerDownload(data, filename, mime) {
+  const blob = new Blob([data], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+
+// ── Step progress helpers ────────────────────────────────────────────────────
+function stepsShow() {
+  const el = document.getElementById('gen-steps');
+  el.classList.add('visible');
+  ['step-keygen','step-csr','step-sign','step-p12'].forEach(id => {
+    const s = document.getElementById(id);
+    s.className = 'step';
+    s.querySelector('.step-icon').textContent = '⏳';
+  });
+}
+function stepSet(id, state) {
+  const s = document.getElementById(id);
+  s.className = 'step ' + state;
+  const icons = { active: '<span class="spinner"></span>', done: '✅', error: '❌' };
+  s.querySelector('.step-icon').innerHTML = icons[state] || '⏳';
+}
+
+// ── Generate & Request ───────────────────────────────────────────────────────
+document.getElementById('btn-generate').addEventListener('click', async () => {
+  const email    = document.getElementById('email').value.trim();
+  const password = document.getElementById('p12-password').value;  // may be empty
+  const statusEl = document.getElementById('gen-status');
+  const btn      = document.getElementById('btn-generate');
+
+  if (!email || !email.includes('@')) {
+    setStatus(statusEl, 'error', 'Please enter a valid email address.');
+    return;
+  }
+
+  btn.disabled = true;
+  clearStatus(statusEl);
+  stepsShow();
+
+  try {
+    // Step 1 — Generate key pair
+    stepSet('step-keygen', 'active');
+    const keyPair = await crypto.subtle.generateKey(
+      { name: 'RSASSA-PKCS1-v1_5', modulusLength: 2048,
+        publicExponent: new Uint8Array([1, 0, 1]), hash: 'SHA-256' },
+      true, ['sign', 'verify']
+    );
+    const privKeyDER = await crypto.subtle.exportKey('pkcs8', keyPair.privateKey);
+    const pubKeyDER  = await crypto.subtle.exportKey('spki',  keyPair.publicKey);
+    const forgePrivKey = forge.pki.privateKeyFromAsn1(
+      forge.asn1.fromDer(forge.util.createBuffer(new Uint8Array(privKeyDER)))
+    );
+    const forgePubKey = forge.pki.publicKeyFromAsn1(
+      forge.asn1.fromDer(forge.util.createBuffer(new Uint8Array(pubKeyDER)))
+    );
+    stepSet('step-keygen', 'done');
+
+    // Step 2 — Build CSR
+    stepSet('step-csr', 'active');
+    const csr = forge.pki.createCertificationRequest();
+    csr.publicKey = forgePubKey;
+    // Force UTF8String encoding — '@' is not valid in ASN.1 PrintableString
+    csr.setSubject([{
+      name: 'commonName',
+      value: email,
+      valueTagClass: forge.asn1.Class.UNIVERSAL,
+      valueType: forge.asn1.Type.UTF8
+    }]);
+    csr.setAttributes([{
+      name: 'extensionRequest',
+      extensions: [{
+        name: 'subjectAltName',
+        altNames: [{ type: 1, value: email }]  // type 1 = rfc822Name
+      }]
+    }]);
+    csr.sign(forgePrivKey, forge.md.sha256.create());
+    const csrPem = forge.pki.certificationRequestToPem(csr);
+    stepSet('step-csr', 'done');
+
+    // Step 3 — Send to CA
+    stepSet('step-sign', 'active');
+    const resp = await fetch('/sign', {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: csrPem
+    });
+    if (!resp.ok) {
+      const msg = await resp.text();
+      throw new Error(msg || resp.statusText);
+    }
+    const certPem = await resp.text();
+    stepSet('step-sign', 'done');
+
+    // Step 4 — Assemble .p12 and install into browser
+    stepSet('step-p12', 'active');
+    const forgeCert = forge.pki.certificateFromPem(certPem);
+    const p12Asn1 = forge.pkcs12.toPkcs12Asn1(forgePrivKey, [forgeCert], password, {
+      algorithm: '3des', friendlyName: email
+    });
+    const p12Der = forge.asn1.toDer(p12Asn1).getBytes();
+    const p12Bytes = new Uint8Array(p12Der.length);
+    for (let i = 0; i < p12Der.length; i++) p12Bytes[i] = p12Der.charCodeAt(i);
+
+    // Navigate to the blob URL — browser handles application/x-pkcs12
+    // by opening the native certificate import dialog (Firefox cert manager,
+    // Windows cert wizard, macOS Keychain) instead of saving a file.
+    const p12Blob = new Blob([p12Bytes], { type: 'application/x-pkcs12' });
+    const p12Url = URL.createObjectURL(p12Blob);
+    // Keep a reference so the fallback link can reuse the same blob.
+    window._lastP12Url = p12Url;
+    window.location.href = p12Url;
+    stepSet('step-p12', 'done');
+
+    const pwNote = password
+      ? ' Enter the password you set when the browser asks.'
+      : ' No password was set — enter an empty password if the browser asks.';
+    setStatus(statusEl, 'success',
+      '✅ Your browser should open a certificate import dialog.' + pwNote +
+      ' If nothing happened, use the <a id="p12-fallback" href="#">save as file</a> fallback below.');
+    document.getElementById('import-guide').style.display = 'block';
+
+    // Wire fallback link after it's rendered.
+    setTimeout(() => {
+      const link = document.getElementById('p12-fallback');
+      if (link) {
+        link.href = p12Url;
+        link.setAttribute('download', 'smime.p12');
+      }
+    }, 0);
+  } catch (err) {
+    // Mark the currently active step as errored
+    ['step-keygen','step-csr','step-sign','step-p12'].forEach(id => {
+      if (document.getElementById(id).classList.contains('active')) stepSet(id, 'error');
+    });
+    setStatus(statusEl, 'error', '❌ ' + err.message);
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+// ── Upload CSR ───────────────────────────────────────────────────────────────
+document.getElementById('btn-upload').addEventListener('click', async () => {
+  const fileInput = document.getElementById('csr-file');
+  const statusEl  = document.getElementById('upload-status');
+  const btn       = document.getElementById('btn-upload');
+
+  if (!fileInput.files || !fileInput.files[0]) {
+    setStatus(statusEl, 'error', 'Please select a CSR file.');
+    return;
+  }
+
+  btn.disabled = true;
+  setStatus(statusEl, 'info', '<span class="spinner"></span> Reading file…');
+
+  try {
+    const csrText = await fileInput.files[0].text();
+    setStatus(statusEl, 'info', '<span class="spinner"></span> Sending CSR to CA…');
+
+    const resp = await fetch('/sign', {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: csrText
+    });
+    if (!resp.ok) {
+      const msg = await resp.text();
+      throw new Error(msg || resp.statusText);
+    }
+    const certPem = await resp.text();
+    triggerDownload(certPem, 'cert.pem', 'application/x-pem-file');
+
+    setStatus(statusEl, 'success', '✅ Certificate issued! <strong>cert.pem</strong> downloaded.');
+    fileInput.value = '';
+  } catch (err) {
+    setStatus(statusEl, 'error', '❌ Error: ' + err.message);
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+// ── Issued Certs list ────────────────────────────────────────────────────────
+async function loadCerts() {
+  const wrap = document.getElementById('cert-table-wrap');
+  wrap.innerHTML = '<p class="empty">Loading…</p>';
+  try {
+    const resp = await fetch('/certs');
+    const certs = await resp.json();
+    if (!certs.length) {
+      wrap.innerHTML = '<p class="empty">No certificates issued yet.</p>';
+      return;
+    }
+    const rows = certs.map(c => `
+      <tr>
+        <td>${escHtml(c.serial)}</td>
+        <td>${escHtml(c.email || c.subject)}</td>
+        <td>${escHtml(c.expiry ? c.expiry.slice(0,10) : '')}</td>
+      </tr>`).join('');
+    wrap.innerHTML = `
+      <table>
+        <thead><tr><th>Serial</th><th>Email / Subject</th><th>Expires</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+  } catch (e) {
+    wrap.innerHTML = '<p class="empty" style="color:#dc2626">Failed to load certs.</p>';
+  }
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── Browser import guide tabs ────────────────────────────────────────────────
+document.querySelectorAll('.guide-tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.guide-tab').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.guide-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('guide-' + btn.dataset.browser).classList.add('active');
+  });
+});
+</script>
+</body>
+</html>
