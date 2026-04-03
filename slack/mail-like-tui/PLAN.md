@@ -97,5 +97,5 @@ Build a terminal UI for Slack that starts with `slail <channel>`, shows recent m
 - Node + Ink
 - Env-var auth only
 - Manual refresh only
-- Basic markdown and link rendering only
+- Basic markdown and link rendering only, including common Slack `rich_text` block-only messages
 - Initial history page is capped to a recent fixed window

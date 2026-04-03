@@ -6,6 +6,7 @@ Current v1 capabilities:
 
 - start with a channel name or channel ID, or pick a channel interactively if no argument is provided
 - list recent messages from that channel
+- display common markdown-only Slack messages that arrive as `rich_text` blocks
 - read thread detail for the selected message
 - post a new channel message
 - reply in-thread
@@ -123,7 +124,8 @@ You can pass:
 
 ## Keybindings
 
-- `↑` / `↓`: move selection
+- `Tab`: switch focus between the channel and thread panes
+- `↑` / `↓`: move selection in the focused pane
 - `Enter`: open the highlighted channel from the picker
 - `n`: compose a new channel message
 - `r`: reply to the selected thread
@@ -163,6 +165,6 @@ v1 intentionally does not include:
 
 - OAuth install flow
 - realtime sync or polling
-- broad Block Kit rendering
+- broad Block Kit rendering beyond common markdown-only `rich_text` messages
 - pagination UI
 - deletion of arbitrary bot messages from other apps

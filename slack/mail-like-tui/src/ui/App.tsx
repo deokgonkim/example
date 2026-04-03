@@ -7,6 +7,34 @@ import {SlackService} from "../slack/service.js";
 
 type ComposerMode = "new" | "reply";
 type ViewMode = "picker" | "messages";
+type PaneFocus = "channel" | "thread";
+
+const THREAD_VIEWPORT_SIZE = 6;
+
+export function getVisibleThreadReplies(threadMessages: ThreadMessage[], selectedMessage?: ChannelMessage): ThreadMessage[] {
+  if (!selectedMessage) {
+    return [];
+  }
+
+  return threadMessages.filter((message) => message.ts !== selectedMessage.ts);
+}
+
+export function getMaxThreadScrollOffset(replyCount: number, viewportSize = THREAD_VIEWPORT_SIZE): number {
+  return Math.max(0, replyCount - viewportSize);
+}
+
+export function clampThreadScrollOffset(offset: number, replyCount: number, viewportSize = THREAD_VIEWPORT_SIZE): number {
+  return Math.max(0, Math.min(offset, getMaxThreadScrollOffset(replyCount, viewportSize)));
+}
+
+export function getVisibleThreadWindow(
+  replies: ThreadMessage[],
+  offset: number,
+  viewportSize = THREAD_VIEWPORT_SIZE,
+): ThreadMessage[] {
+  const start = clampThreadScrollOffset(offset, replies.length, viewportSize);
+  return replies.slice(start, start + viewportSize);
+}
 
 type AppProps = {
   channelInput?: string;
@@ -30,10 +58,24 @@ export function App({channelInput, service}: AppProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [composerMode, setComposerMode] = useState<ComposerMode>();
   const [composerValue, setComposerValue] = useState("");
+  const [paneFocus, setPaneFocus] = useState<PaneFocus>("channel");
+  const [threadScrollOffset, setThreadScrollOffset] = useState(0);
   const [asyncState, setAsyncState] = useState<AsyncState>({loading: true});
   const [refreshToken, setRefreshToken] = useState(0);
 
   const selectedMessage = messages[selectedIndex];
+  const threadReplies = useMemo(
+    () => getVisibleThreadReplies(threadMessages, selectedMessage),
+    [selectedMessage, threadMessages],
+  );
+  const visibleThreadReplies = useMemo(
+    () => getVisibleThreadWindow(threadReplies, threadScrollOffset),
+    [threadReplies, threadScrollOffset],
+  );
+  const maxThreadScrollOffset = useMemo(
+    () => getMaxThreadScrollOffset(threadReplies.length),
+    [threadReplies.length],
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -82,6 +124,8 @@ export function App({channelInput, service}: AppProps) {
         setViewMode("messages");
         setChannel(targetChannel);
         setMessages(history);
+        setPaneFocus("channel");
+        setThreadScrollOffset(0);
         setSelectedIndex((current) => {
           if (history.length === 0) {
             return 0;
@@ -118,6 +162,7 @@ export function App({channelInput, service}: AppProps) {
     async function loadThread() {
       if (!channel || !selectedMessage) {
         setThreadMessages([]);
+        setThreadScrollOffset(0);
         return;
       }
 
@@ -134,6 +179,8 @@ export function App({channelInput, service}: AppProps) {
         }
 
         setThreadMessages(replies);
+        setPaneFocus("channel");
+        setThreadScrollOffset(0);
         setAsyncState((current) => ({
           ...current,
           loading: false,
@@ -158,6 +205,10 @@ export function App({channelInput, service}: AppProps) {
       cancelled = true;
     };
   }, [channel, selectedMessage, service]);
+
+  useEffect(() => {
+    setThreadScrollOffset((current) => clampThreadScrollOffset(current, threadReplies.length));
+  }, [threadReplies.length]);
 
   useInput((input, key) => {
     if (composerMode) {
@@ -197,6 +248,11 @@ export function App({channelInput, service}: AppProps) {
       return;
     }
 
+    if (key.tab || input === "\t") {
+      setPaneFocus((current) => (current === "channel" ? "thread" : "channel"));
+      return;
+    }
+
     if (input === "n") {
       setComposerMode("new");
       setComposerValue("");
@@ -223,11 +279,21 @@ export function App({channelInput, service}: AppProps) {
     }
 
     if (key.upArrow) {
+      if (paneFocus === "thread") {
+        setThreadScrollOffset((current) => Math.max(0, current - 1));
+        return;
+      }
+
       setSelectedIndex((current) => Math.max(0, current - 1));
       return;
     }
 
     if (key.downArrow) {
+      if (paneFocus === "thread") {
+        setThreadScrollOffset((current) => Math.min(maxThreadScrollOffset, current + 1));
+        return;
+      }
+
       setSelectedIndex((current) => Math.min(messages.length - 1, current + 1));
     }
   });
@@ -317,8 +383,16 @@ export function App({channelInput, service}: AppProps) {
         </Box>
       ) : (
         <Box marginTop={1} height={20}>
-          <Box flexDirection="column" width="50%" borderStyle="round" borderColor="cyan" paddingX={1}>
-            <Text bold>Channel</Text>
+          <Box
+            flexDirection="column"
+            width="50%"
+            borderStyle="round"
+            borderColor={paneFocus === "channel" ? "cyan" : "gray"}
+            paddingX={1}
+          >
+            <Text bold color={paneFocus === "channel" ? "cyan" : undefined}>
+              Channel
+            </Text>
             {messages.length === 0 ? (
               <Text color="gray">No messages</Text>
             ) : (
@@ -333,8 +407,17 @@ export function App({channelInput, service}: AppProps) {
               })
             )}
           </Box>
-          <Box flexDirection="column" width="50%" borderStyle="round" borderColor="magenta" paddingX={1} marginLeft={1}>
-            <Text bold>Thread</Text>
+          <Box
+            flexDirection="column"
+            width="50%"
+            borderStyle="round"
+            borderColor={paneFocus === "thread" ? "magenta" : "gray"}
+            paddingX={1}
+            marginLeft={1}
+          >
+            <Text bold color={paneFocus === "thread" ? "magenta" : undefined}>
+              Thread
+            </Text>
             {!selectedMessage ? (
               <Text color="gray">Select a message</Text>
             ) : (
@@ -344,15 +427,25 @@ export function App({channelInput, service}: AppProps) {
                 </Text>
                 <Text>{selectedMessage.text}</Text>
                 <Box marginTop={1} flexDirection="column">
-                  {threadMessages.map((message) => (
-                    <Box key={message.ts} flexDirection="column" marginBottom={1}>
-                      <Text color="yellow">
-                        {message.createdAt} {message.author.label}
-                      </Text>
-                      <Text>{message.text}</Text>
-                    </Box>
-                  ))}
+                  {threadReplies.length === 0 ? (
+                    <Text color="gray">No replies</Text>
+                  ) : (
+                    visibleThreadReplies.map((message) => (
+                      <Box key={message.ts} flexDirection="column" marginBottom={1}>
+                        <Text color="yellow">
+                          {message.createdAt} {message.author.label}
+                        </Text>
+                        <Text>{message.text}</Text>
+                      </Box>
+                    ))
+                  )}
                 </Box>
+                {threadReplies.length > THREAD_VIEWPORT_SIZE ? (
+                  <Text color="gray">
+                    Replies {threadScrollOffset + 1}-{Math.min(threadScrollOffset + THREAD_VIEWPORT_SIZE, threadReplies.length)} of{" "}
+                    {threadReplies.length}
+                  </Text>
+                ) : null}
               </>
             )}
           </Box>
@@ -367,7 +460,7 @@ export function App({channelInput, service}: AppProps) {
             <TextInput value={composerValue} onChange={setComposerValue} onSubmit={handleSubmit} />
           </>
         ) : viewMode === "messages" ? (
-          <Text color="gray">Keys: ↑/↓ move, n new, r reply, d delete, R refresh, q quit</Text>
+          <Text color="gray">Keys: Tab switch pane, ↑/↓ act on focused pane, n new, r reply, d delete, R refresh, q quit</Text>
         ) : null}
         {footer}
       </Box>
