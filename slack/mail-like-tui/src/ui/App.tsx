@@ -1,5 +1,5 @@
 import React, {useEffect, useMemo, useState} from "react";
-import {Box, Text, useApp, useInput} from "ink";
+import {Box, Text, useApp, useInput, useStdout} from "ink";
 import TextInput from "ink-text-input";
 
 import type {ChannelMessage, ChannelRef, ThreadMessage} from "../slack/types.js";
@@ -9,7 +9,134 @@ type ComposerMode = "new" | "reply";
 type ViewMode = "picker" | "messages";
 type PaneFocus = "channel" | "thread";
 
-const THREAD_VIEWPORT_SIZE = 6;
+const NARROW_LAYOUT_BREAKPOINT = 100;
+const APP_RESERVED_ROWS = 4;
+const MIN_MESSAGE_AREA_HEIGHT = 10;
+const MIN_NARROW_CHANNEL_HEIGHT = 5;
+const MIN_NARROW_THREAD_HEIGHT = 6;
+const THREAD_PANE_CHROME_LINES = 3;
+
+export function getPaneContentWidth(columns: number, narrow: boolean): number {
+  const usableColumns = Math.max(10, columns - 6);
+  if (narrow) {
+    return usableColumns;
+  }
+
+  return Math.max(10, Math.floor((usableColumns - 1) / 2) - 2);
+}
+
+export function wrapLineHard(text: string, width: number): string[] {
+  const safeWidth = Math.max(1, width);
+  const chars = Array.from(text);
+
+  if (chars.length === 0) {
+    return [""];
+  }
+
+  const lines: string[] = [];
+  for (let index = 0; index < chars.length; index += safeWidth) {
+    lines.push(chars.slice(index, index + safeWidth).join(""));
+  }
+
+  return lines;
+}
+
+export function wrapTextToWidth(text: string, width: number): string[] {
+  return text.split("\n").flatMap((line) => wrapLineHard(line, width));
+}
+
+export function truncateLine(text: string, width: number): string {
+  const safeWidth = Math.max(1, width);
+  const chars = Array.from(text);
+
+  if (chars.length <= safeWidth) {
+    return text;
+  }
+
+  if (safeWidth === 1) {
+    return chars[0];
+  }
+
+  return `${chars.slice(0, safeWidth - 1).join("")}…`;
+}
+
+export function isNarrowLayout(columns: number, breakpoint = NARROW_LAYOUT_BREAKPOINT): boolean {
+  return columns < breakpoint;
+}
+
+export function getPickerViewportSize(rows: number): number {
+  return Math.max(3, rows - 8);
+}
+
+export function getPickerContainerHeight(rows: number): number {
+  return Math.max(6, rows - 4);
+}
+
+export function getVisiblePickerWindow(
+  channels: ChannelRef[],
+  selectionIndex: number,
+  viewportSize: number,
+): ChannelRef[] {
+  if (channels.length === 0) {
+    return [];
+  }
+
+  const clampedIndex = clampChannelSelectionIndex(selectionIndex, channels);
+  const maxStart = Math.max(0, channels.length - viewportSize);
+  const start = Math.min(maxStart, Math.max(0, clampedIndex - Math.floor(viewportSize / 2)));
+  return channels.slice(start, start + viewportSize);
+}
+
+export function getMessageAreaHeight(rows: number): number {
+  return Math.max(MIN_MESSAGE_AREA_HEIGHT, rows - APP_RESERVED_ROWS);
+}
+
+export function getMessageViewLayout(columns: number, rows: number): {
+  messageAreaHeight: number;
+  narrow: boolean;
+  containerDirection: "row" | "column";
+  channelWidth?: string;
+  threadWidth?: string;
+  channelHeight: number;
+  threadHeight: number;
+  paneGapMarginLeft?: number;
+  paneGapMarginTop?: number;
+  footerLegend: string;
+} {
+  const messageAreaHeight = getMessageAreaHeight(rows);
+
+  if (isNarrowLayout(columns)) {
+    const stackedHeight = Math.max(MIN_NARROW_CHANNEL_HEIGHT + MIN_NARROW_THREAD_HEIGHT + 1, messageAreaHeight);
+    const usableHeight = stackedHeight - 1;
+    const channelHeight = Math.max(
+      MIN_NARROW_CHANNEL_HEIGHT,
+      Math.min(usableHeight - MIN_NARROW_THREAD_HEIGHT, Math.floor(usableHeight * 0.4)),
+    );
+    const threadHeight = usableHeight - channelHeight;
+
+    return {
+      messageAreaHeight,
+      narrow: true,
+      containerDirection: "column",
+      channelHeight,
+      threadHeight,
+      paneGapMarginTop: 1,
+      footerLegend: "Keys: b, Tab, ↑/↓, n, r, d, R, q",
+    };
+  }
+
+  return {
+    messageAreaHeight,
+    narrow: false,
+    containerDirection: "row",
+    channelWidth: "50%",
+    threadWidth: "50%",
+    channelHeight: messageAreaHeight,
+    threadHeight: messageAreaHeight,
+    paneGapMarginLeft: 1,
+    footerLegend: "Keys: b channels, Tab switch pane, ↑/↓ act on focused pane, n new, r reply, d delete, R refresh, q quit",
+  };
+}
 
 export function getChannelSelectionIndexForChannel(channels: ChannelRef[], channel?: ChannelRef): number {
   if (!channel || channels.length === 0) {
@@ -36,21 +163,73 @@ export function getVisibleThreadReplies(threadMessages: ThreadMessage[], selecte
   return threadMessages.filter((message) => message.ts !== selectedMessage.ts);
 }
 
-export function getMaxThreadScrollOffset(replyCount: number, viewportSize = THREAD_VIEWPORT_SIZE): number {
-  return Math.max(0, replyCount - viewportSize);
+export function getPaneViewportSize(height: number): number {
+  return Math.max(1, height - 2);
 }
 
-export function clampThreadScrollOffset(offset: number, replyCount: number, viewportSize = THREAD_VIEWPORT_SIZE): number {
-  return Math.max(0, Math.min(offset, getMaxThreadScrollOffset(replyCount, viewportSize)));
+export function getVisibleChannelWindow(
+  messages: ChannelMessage[],
+  selectionIndex: number,
+  viewportSize: number,
+): ChannelMessage[] {
+  if (messages.length === 0) {
+    return [];
+  }
+
+  const clampedIndex = Math.max(0, Math.min(selectionIndex, messages.length - 1));
+  const maxStart = Math.max(0, messages.length - viewportSize);
+  const start = Math.min(maxStart, Math.max(0, clampedIndex - Math.floor(viewportSize / 2)));
+  return messages.slice(start, start + viewportSize);
 }
 
-export function getVisibleThreadWindow(
-  replies: ThreadMessage[],
+export function getMaxThreadScrollOffset(lineCount: number, lineBudget: number): number {
+  return Math.max(0, lineCount - lineBudget);
+}
+
+export function clampThreadScrollOffset(offset: number, lineCount: number, lineBudget: number): number {
+  return Math.max(0, Math.min(offset, getMaxThreadScrollOffset(lineCount, lineBudget)));
+}
+
+export function getVisibleThreadLinesFromOffset(
+  lines: string[],
   offset: number,
-  viewportSize = THREAD_VIEWPORT_SIZE,
-): ThreadMessage[] {
-  const start = clampThreadScrollOffset(offset, replies.length, viewportSize);
-  return replies.slice(start, start + viewportSize);
+  lineBudget: number,
+): string[] {
+  const start = clampThreadScrollOffset(offset, lines.length, lineBudget);
+  return lines.slice(start, start + lineBudget);
+}
+
+export function formatThreadMessageLines(message: Pick<ThreadMessage, "createdAt" | "author" | "text">): string[] {
+  return [
+    `${message.createdAt} ${message.author.label}`,
+    ...message.text.split("\n"),
+  ];
+}
+
+export function getThreadContentLineBudget(threadHeight: number, hasReplySummary: boolean): number {
+  return Math.max(1, threadHeight - THREAD_PANE_CHROME_LINES - (hasReplySummary ? 1 : 0));
+}
+
+export function getThreadDocumentLines(
+  selectedMessage: Pick<ChannelMessage, "createdAt" | "author" | "text">,
+  replies: Array<Pick<ThreadMessage, "createdAt" | "author" | "text">>,
+): string[] {
+  const lines: string[] = [];
+  lines.push(...formatThreadMessageLines(selectedMessage));
+
+  for (const reply of replies) {
+    lines.push("", ...formatThreadMessageLines(reply));
+  }
+
+  return lines;
+}
+
+export function getWrappedThreadDocumentLines(
+  selectedMessage: Pick<ChannelMessage, "createdAt" | "author" | "text">,
+  replies: Array<Pick<ThreadMessage, "createdAt" | "author" | "text">>,
+  width: number,
+): string[] {
+  return getThreadDocumentLines(selectedMessage, replies).flatMap((line) => wrapLineHard(line, width));
 }
 
 type AppProps = {
@@ -66,6 +245,7 @@ type AsyncState = {
 
 export function App({channelInput, service}: AppProps) {
   const {exit} = useApp();
+  const {stdout} = useStdout();
   const [viewMode, setViewMode] = useState<ViewMode>("messages");
   const [availableChannels, setAvailableChannels] = useState<ChannelRef[]>([]);
   const [channelSelectionIndex, setChannelSelectionIndex] = useState(0);
@@ -81,17 +261,55 @@ export function App({channelInput, service}: AppProps) {
   const [refreshToken, setRefreshToken] = useState(0);
 
   const selectedMessage = messages[selectedIndex];
+  const terminalColumns = stdout?.columns || 80;
+  const terminalRows = stdout?.rows || 24;
+  const layout = useMemo(() => getMessageViewLayout(terminalColumns, terminalRows), [terminalColumns, terminalRows]);
+  const paneContentWidth = useMemo(() => getPaneContentWidth(terminalColumns, layout.narrow), [terminalColumns, layout.narrow]);
+  const pickerContainerHeight = useMemo(() => getPickerContainerHeight(terminalRows), [terminalRows]);
+  const pickerViewportSize = useMemo(() => getPickerViewportSize(terminalRows), [terminalRows]);
+  const channelViewportSize = useMemo(() => getPaneViewportSize(layout.channelHeight), [layout.channelHeight]);
+  const visiblePickerChannels = useMemo(
+    () => getVisiblePickerWindow(availableChannels, channelSelectionIndex, pickerViewportSize),
+    [availableChannels, channelSelectionIndex, pickerViewportSize],
+  );
+  const visiblePickerStartIndex = useMemo(() => {
+    if (visiblePickerChannels.length === 0) {
+      return 0;
+    }
+
+    return availableChannels.findIndex((channel) => channel.id === visiblePickerChannels[0]?.id);
+  }, [availableChannels, visiblePickerChannels]);
   const threadReplies = useMemo(
     () => getVisibleThreadReplies(threadMessages, selectedMessage),
     [selectedMessage, threadMessages],
   );
-  const visibleThreadReplies = useMemo(
-    () => getVisibleThreadWindow(threadReplies, threadScrollOffset),
-    [threadReplies, threadScrollOffset],
+  const visibleChannelMessages = useMemo(
+    () => getVisibleChannelWindow(messages, selectedIndex, channelViewportSize),
+    [messages, selectedIndex, channelViewportSize],
+  );
+  const visibleChannelStartIndex = useMemo(() => {
+    if (visibleChannelMessages.length === 0) {
+      return 0;
+    }
+
+    return messages.findIndex((message) => message.ts === visibleChannelMessages[0]?.ts);
+  }, [messages, visibleChannelMessages]);
+  const threadDocumentLines = useMemo(
+    () => (selectedMessage ? getWrappedThreadDocumentLines(selectedMessage, threadReplies, paneContentWidth) : []),
+    [selectedMessage, threadReplies, paneContentWidth],
+  );
+  const threadHasReplySummary = threadReplies.length > 0;
+  const threadContentLineBudget = useMemo(
+    () => getThreadContentLineBudget(layout.threadHeight || 0, threadHasReplySummary),
+    [layout.threadHeight, threadHasReplySummary],
+  );
+  const visibleThreadLines = useMemo(
+    () => getVisibleThreadLinesFromOffset(threadDocumentLines, threadScrollOffset, threadContentLineBudget),
+    [threadDocumentLines, threadScrollOffset, threadContentLineBudget],
   );
   const maxThreadScrollOffset = useMemo(
-    () => getMaxThreadScrollOffset(threadReplies.length),
-    [threadReplies.length],
+    () => getMaxThreadScrollOffset(threadDocumentLines.length, threadContentLineBudget),
+    [threadDocumentLines.length, threadContentLineBudget],
   );
 
   async function openChannelPicker() {
@@ -244,8 +462,8 @@ export function App({channelInput, service}: AppProps) {
   }, [channel, selectedMessage, service]);
 
   useEffect(() => {
-    setThreadScrollOffset((current) => clampThreadScrollOffset(current, threadReplies.length));
-  }, [threadReplies.length]);
+    setThreadScrollOffset((current) => clampThreadScrollOffset(current, threadDocumentLines.length, threadContentLineBudget));
+  }, [threadDocumentLines.length, threadContentLineBudget]);
 
   useInput((input, key) => {
     if (composerMode) {
@@ -408,26 +626,35 @@ export function App({channelInput, service}: AppProps) {
         slail {channel ? `#${channel.name}` : channelInput || "channel picker"}
       </Text>
       {viewMode === "picker" ? (
-        <Box marginTop={1} flexDirection="column" borderStyle="round" borderColor="cyan" paddingX={1}>
+        <Box marginTop={1} height={pickerContainerHeight} flexDirection="column" borderStyle="round" borderColor="cyan" paddingX={1}>
           <Text bold>Channels</Text>
           {availableChannels.length === 0 ? (
             <Text color="gray">No channels available</Text>
           ) : (
-            availableChannels.map((item, index) => (
-              <Text key={item.id} color={index === channelSelectionIndex ? "cyan" : undefined}>
-                {index === channelSelectionIndex ? ">" : " "} #{item.name}
-              </Text>
-            ))
+            visiblePickerChannels.map((item, index) => {
+              const actualIndex = visiblePickerStartIndex + index;
+              return (
+                <Text key={item.id} color={actualIndex === channelSelectionIndex ? "cyan" : undefined}>
+                  {actualIndex === channelSelectionIndex ? ">" : " "} #{item.name}
+                </Text>
+              );
+            })
           )}
+          {availableChannels.length > visiblePickerChannels.length ? (
+            <Text color="gray">
+              Channels {visiblePickerStartIndex + 1}-{visiblePickerStartIndex + visiblePickerChannels.length} of {availableChannels.length}
+            </Text>
+          ) : null}
           <Box marginTop={1}>
-            <Text color="gray">Keys: ↑/↓ move, Enter open, q quit</Text>
+            <Text color="gray">Keys: ↑/↓, Enter, q</Text>
           </Box>
         </Box>
       ) : (
-        <Box marginTop={1} height={20}>
+        <Box marginTop={1} height={layout.messageAreaHeight} flexDirection={layout.containerDirection}>
           <Box
             flexDirection="column"
-            width="50%"
+            width={layout.channelWidth}
+            height={layout.channelHeight}
             borderStyle="round"
             borderColor={paneFocus === "channel" ? "cyan" : "gray"}
             paddingX={1}
@@ -438,12 +665,15 @@ export function App({channelInput, service}: AppProps) {
             {messages.length === 0 ? (
               <Text color="gray">No messages</Text>
             ) : (
-              messages.map((message, index) => {
-                const selected = index === selectedIndex;
+              visibleChannelMessages.map((message, index) => {
+                const actualIndex = visibleChannelStartIndex + index;
+                const selected = actualIndex === selectedIndex;
+                const rowText = `${selected ? ">" : " "} ${message.createdAt} ${message.author.label}: ${message.preview}${
+                  message.replyCount > 0 ? ` (${message.replyCount} replies)` : ""
+                }`;
                 return (
                   <Text key={message.ts} color={selected ? "cyan" : undefined}>
-                    {selected ? ">" : " "} {message.createdAt} {message.author.label}: {message.preview}
-                    {message.replyCount > 0 ? ` (${message.replyCount} replies)` : ""}
+                    {truncateLine(rowText, paneContentWidth)}
                   </Text>
                 );
               })
@@ -451,11 +681,13 @@ export function App({channelInput, service}: AppProps) {
           </Box>
           <Box
             flexDirection="column"
-            width="50%"
+            width={layout.threadWidth}
+            height={layout.threadHeight}
             borderStyle="round"
             borderColor={paneFocus === "thread" ? "magenta" : "gray"}
             paddingX={1}
-            marginLeft={1}
+            marginLeft={layout.paneGapMarginLeft}
+            marginTop={layout.paneGapMarginTop}
           >
             <Text bold color={paneFocus === "thread" ? "magenta" : undefined}>
               Thread
@@ -463,32 +695,26 @@ export function App({channelInput, service}: AppProps) {
             {!selectedMessage ? (
               <Text color="gray">Select a message</Text>
             ) : (
-              <>
-                <Text>
-                  {selectedMessage.createdAt} {selectedMessage.author.label}
-                </Text>
-                <Text>{selectedMessage.text}</Text>
-                <Box marginTop={1} flexDirection="column">
-                  {threadReplies.length === 0 ? (
-                    <Text color="gray">No replies</Text>
-                  ) : (
-                    visibleThreadReplies.map((message) => (
-                      <Box key={message.ts} flexDirection="column" marginBottom={1}>
-                        <Text color="yellow">
-                          {message.createdAt} {message.author.label}
-                        </Text>
-                        <Text>{message.text}</Text>
-                      </Box>
-                    ))
-                  )}
-                </Box>
-                {threadReplies.length > THREAD_VIEWPORT_SIZE ? (
+              <Box flexDirection="column">
+                {visibleThreadLines.length === 0 ? (
+                  <Text color="gray">No thread content</Text>
+                ) : (
+                  visibleThreadLines.map((line, index) => (
+                    <Text
+                      key={`${selectedMessage.ts}-${threadScrollOffset + index}`}
+                      color={line === "" ? undefined : /^\w{3} \d{2},/.test(line) ? "yellow" : undefined}
+                    >
+                      {line}
+                    </Text>
+                  ))
+                )}
+                {threadHasReplySummary ? (
                   <Text color="gray">
-                    Replies {threadScrollOffset + 1}-{Math.min(threadScrollOffset + THREAD_VIEWPORT_SIZE, threadReplies.length)} of{" "}
-                    {threadReplies.length}
+                    Lines {threadScrollOffset + 1}-{Math.min(threadScrollOffset + threadContentLineBudget, threadDocumentLines.length)} of{" "}
+                    {threadDocumentLines.length}
                   </Text>
                 ) : null}
-              </>
+              </Box>
             )}
           </Box>
         </Box>
@@ -502,7 +728,7 @@ export function App({channelInput, service}: AppProps) {
             <TextInput value={composerValue} onChange={setComposerValue} onSubmit={handleSubmit} />
           </>
         ) : viewMode === "messages" ? (
-          <Text color="gray">Keys: b channels, Tab switch pane, ↑/↓ act on focused pane, n new, r reply, d delete, R refresh, q quit</Text>
+          <Text color="gray">{layout.footerLegend}</Text>
         ) : null}
         {footer}
       </Box>
