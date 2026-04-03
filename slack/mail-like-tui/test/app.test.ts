@@ -2,12 +2,14 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import {
+  clampChannelSelectionIndex,
   clampThreadScrollOffset,
+  getChannelSelectionIndexForChannel,
   getMaxThreadScrollOffset,
   getVisibleThreadReplies,
   getVisibleThreadWindow,
 } from "../src/ui/App.js";
-import type {ChannelMessage, ThreadMessage} from "../src/slack/types.js";
+import type {ChannelMessage, ChannelRef, ThreadMessage} from "../src/slack/types.js";
 
 function makeChannelMessage(ts: string): ChannelMessage {
   return {
@@ -30,6 +32,32 @@ function makeThreadMessage(ts: string): ThreadMessage {
     createdAt: "Apr 03, 10:00",
   };
 }
+
+function makeChannelRef(id: string, name: string): ChannelRef {
+  return {id, name};
+}
+
+test("getChannelSelectionIndexForChannel returns the current channel index when present", () => {
+  const channels = [makeChannelRef("C1", "general"), makeChannelRef("C2", "alerts"), makeChannelRef("C3", "random")];
+
+  assert.equal(getChannelSelectionIndexForChannel(channels, makeChannelRef("C2", "alerts")), 1);
+});
+
+test("getChannelSelectionIndexForChannel falls back to the first row when the channel is missing", () => {
+  const channels = [makeChannelRef("C1", "general"), makeChannelRef("C2", "alerts")];
+
+  assert.equal(getChannelSelectionIndexForChannel(channels, makeChannelRef("C9", "missing")), 0);
+  assert.equal(getChannelSelectionIndexForChannel(channels), 0);
+});
+
+test("clampChannelSelectionIndex keeps picker selection inside the available channel range", () => {
+  const channels = [makeChannelRef("C1", "general"), makeChannelRef("C2", "alerts")];
+
+  assert.equal(clampChannelSelectionIndex(-1, channels), 0);
+  assert.equal(clampChannelSelectionIndex(1, channels), 1);
+  assert.equal(clampChannelSelectionIndex(99, channels), 1);
+  assert.equal(clampChannelSelectionIndex(99, []), 0);
+});
 
 test("getVisibleThreadReplies removes the selected root message", () => {
   const selectedMessage = makeChannelMessage("100.0");

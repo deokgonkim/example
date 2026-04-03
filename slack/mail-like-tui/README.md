@@ -124,6 +124,7 @@ You can pass:
 
 ## Keybindings
 
+- `b`: return to the channel picker
 - `Tab`: switch focus between the channel and thread panes
 - `↑` / `↓`: move selection in the focused pane
 - `Enter`: open the highlighted channel from the picker

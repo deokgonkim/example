@@ -11,6 +11,23 @@ type PaneFocus = "channel" | "thread";
 
 const THREAD_VIEWPORT_SIZE = 6;
 
+export function getChannelSelectionIndexForChannel(channels: ChannelRef[], channel?: ChannelRef): number {
+  if (!channel || channels.length === 0) {
+    return 0;
+  }
+
+  const index = channels.findIndex((item) => item.id === channel.id);
+  return index >= 0 ? index : 0;
+}
+
+export function clampChannelSelectionIndex(index: number, channels: ChannelRef[]): number {
+  if (channels.length === 0) {
+    return 0;
+  }
+
+  return Math.max(0, Math.min(index, channels.length - 1));
+}
+
 export function getVisibleThreadReplies(threadMessages: ThreadMessage[], selectedMessage?: ChannelMessage): ThreadMessage[] {
   if (!selectedMessage) {
     return [];
@@ -77,6 +94,31 @@ export function App({channelInput, service}: AppProps) {
     [threadReplies.length],
   );
 
+  async function openChannelPicker() {
+    setAsyncState({loading: true, status: "Loading channel list…"});
+
+    try {
+      const channels = availableChannels.length > 0 ? availableChannels : await service.listChannels();
+      setAvailableChannels(channels);
+      setChannelSelectionIndex((current) => {
+        const preferredIndex = getChannelSelectionIndexForChannel(channels, channel);
+        return channels.some((item) => item.id === channel?.id) ? preferredIndex : clampChannelSelectionIndex(current, channels);
+      });
+      setViewMode("picker");
+      setPaneFocus("channel");
+      setThreadScrollOffset(0);
+      setAsyncState({
+        loading: false,
+        status: `Select a channel (${channels.length} available)`,
+      });
+    } catch (error) {
+      setAsyncState({
+        loading: false,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
   useEffect(() => {
     let cancelled = false;
 
@@ -98,12 +140,7 @@ export function App({channelInput, service}: AppProps) {
 
           setAvailableChannels(channels);
           setViewMode("picker");
-          setChannelSelectionIndex((current) => {
-            if (channels.length === 0) {
-              return 0;
-            }
-            return Math.min(current, channels.length - 1);
-          });
+          setChannelSelectionIndex((current) => clampChannelSelectionIndex(current, channels));
           setAsyncState({
             loading: false,
             status: `Select a channel (${channels.length} available)`,
@@ -245,6 +282,11 @@ export function App({channelInput, service}: AppProps) {
         setAsyncState({loading: true, status: `Loading #${availableChannels[channelSelectionIndex].name}…`});
       }
 
+      return;
+    }
+
+    if (input === "b") {
+      void openChannelPicker();
       return;
     }
 
@@ -460,7 +502,7 @@ export function App({channelInput, service}: AppProps) {
             <TextInput value={composerValue} onChange={setComposerValue} onSubmit={handleSubmit} />
           </>
         ) : viewMode === "messages" ? (
-          <Text color="gray">Keys: Tab switch pane, ↑/↓ act on focused pane, n new, r reply, d delete, R refresh, q quit</Text>
+          <Text color="gray">Keys: b channels, Tab switch pane, ↑/↓ act on focused pane, n new, r reply, d delete, R refresh, q quit</Text>
         ) : null}
         {footer}
       </Box>
