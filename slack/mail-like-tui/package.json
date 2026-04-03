@@ -1,0 +1,38 @@
+{
+  "name": "slail",
+  "version": "0.1.0",
+  "description": "Mail-like Slack TUI",
+  "type": "module",
+  "bin": {
+    "slail": "./dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "PLAN.md"
+  ],
+  "scripts": {
+    "build": "node -e \"fs.rmSync('dist', {recursive: true, force: true})\" && tsc -p tsconfig.json",
+    "dev": "tsx src/index.tsx",
+    "test": "node --import tsx --test test/**/*.test.ts",
+    "prepare": "npm run build"
+  },
+  "keywords": [
+    "slack",
+    "tui",
+    "ink"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@slack/web-api": "^7.12.0",
+    "ink": "^5.2.1",
+    "ink-text-input": "^6.0.0",
+    "react": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.6.0",
+    "@types/react": "^18.3.11",
+    "tsx": "^4.19.2",
+    "typescript": "^5.9.3"
+  }
+}
