@@ -14,7 +14,7 @@ SPECIFIED_WIDTH=$3
 FPS=${4:-24}  # 네 번째 인자가 없으면 기본값 24fps
 
 # 1. 첫 번째 파일 찾기 및 해상도 추출
-FIRST_FILE=$(ls -1 $FILE_PATTERN 2>/dev/null | head -n 1)
+FIRST_FILE=$(find . -maxdepth 2 -type f -path "./${FILE_PATTERN}" | sort | head -n 1)
 if [ -z "$FIRST_FILE" ]; then
     echo "오류: 패턴($FILE_PATTERN)에 맞는 파일을 찾을 수 없습니다."
     exit 1
@@ -32,15 +32,15 @@ else
 fi
 
 # 2. ffmpeg를 이용한 MP4 생성
-# -r: 프레임 레이트 (초당 사진 장수)
+# -framerate: 입력 이미지 시퀀스의 재생 속도 (초당 사진 장수)
 # -vcodec libx264: 가장 범용적인 고효율 코덱
 # -crf 20: 화질 (18~23 권장, 낮을수록 고화질/대용량)
 # -pix_fmt yuv420p: 모든 기기(모바일/웹) 호환성 보장
 # -vf scale: 지정된 너비에 맞춰 비율 유지 (홀수 방지 위해 "trunc(oh*a/2)*2" 적용)
 
 ffmpeg -v info -stats \
+    -framerate "$FPS" \
     -f image2 -pattern_type glob -i "$FILE_PATTERN" \
-    -r "$FPS" \
     -vcodec libx264 \
     -crf 20 \
     -pix_fmt yuv420p \
@@ -52,4 +52,3 @@ if [ $? -eq 0 ]; then
 else
     echo "오류: 변환에 실패했습니다. 파일 패턴에 따옴표를 썼는지 확인하세요. (예: \"*.jpg\")"
 fi
-
