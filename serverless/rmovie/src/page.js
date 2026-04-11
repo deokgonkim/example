@@ -49,7 +49,7 @@ function createHtml({ name, url }) {
       }
 
       main {
-        width: min(720px, 100%);
+        width: min(920px, 100%);
         background: var(--card);
         border: 1px solid rgba(30, 27, 24, 0.08);
         border-radius: 20px;
@@ -61,6 +61,7 @@ function createHtml({ name, url }) {
         margin: 0 0 12px;
         font-size: clamp(2rem, 5vw, 3.5rem);
         line-height: 1;
+        white-space: nowrap;
       }
 
       p {
@@ -106,7 +107,7 @@ function createHtml({ name, url }) {
   <body>
     <main>
       <p class="status" id="status">Redirecting in 4 seconds.</p>
-      <h1>${escapedName}</h1>
+      <h1 id="movie-title">${escapedName}</h1>
       <p><a href="${escapedUrl}" rel="noreferrer">${escapedUrl}</a></p>
       <div class="actions">
         <a class="button" href="${nextHref}">Next</a>
@@ -116,7 +117,25 @@ function createHtml({ name, url }) {
     <script>
       const targetUrl = ${JSON.stringify(url)};
       const status = document.getElementById('status');
+      const title = document.getElementById('movie-title');
       const stopButton = document.getElementById('stop-button');
+      const minTitleFontSize = 20;
+
+      function fitTitleToSingleLine() {
+        title.style.fontSize = '';
+
+        let fontSize = parseFloat(window.getComputedStyle(title).fontSize);
+        title.style.fontSize = fontSize + 'px';
+
+        while (title.scrollWidth > title.clientWidth && fontSize > minTitleFontSize) {
+          fontSize -= 1;
+          title.style.fontSize = fontSize + 'px';
+        }
+      }
+
+      fitTitleToSingleLine();
+      window.addEventListener('resize', fitTitleToSingleLine);
+
       let redirectTimer = window.setTimeout(function redirectToUrl() {
         window.location.href = targetUrl;
       }, 4000);
